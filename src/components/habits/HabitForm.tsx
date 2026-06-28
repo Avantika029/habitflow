@@ -59,9 +59,13 @@ const CATEGORIES = [
   'Other',
 ]
 
-export default function HabitForm() {
-  const { addHabit, habits } = useHabitStore()
-  const { closeCreateHabit } = useUIStore()
+export default function HabitForm({
+  existingHabit,
+}: {
+  existingHabit?: Habit
+}) {
+  const { addHabit, updateHabit, habits } = useHabitStore()
+  const { closeCreateHabit, closeEditHabit } = useUIStore()
 
   const {
     register,
@@ -72,13 +76,17 @@ export default function HabitForm() {
   } = useForm<HabitFormValues>({
     resolver: zodResolver(habitSchema),
     defaultValues: {
-      icon: '🎯',
-      color: '#7c3aed',
-      priority: 'medium',
-      difficulty: 'medium',
-      frequency: 'daily',
-      targetCount: 1,
-      category: 'Other',
+      icon: existingHabit?.icon ?? '🎯',
+      color: existingHabit?.color ?? '#7c3aed',
+      priority: existingHabit?.priority ?? 'medium',
+      difficulty: existingHabit?.difficulty ?? 'medium',
+      frequency: existingHabit?.schedule.frequency ?? 'daily',
+      intervalDays: existingHabit?.schedule.intervalDays,
+      targetCount: existingHabit?.targetCount ?? 1,
+      category: existingHabit?.category ?? 'Other',
+      name: existingHabit?.name ?? '',
+      description: existingHabit?.description ?? '',
+      motivationalQuote: existingHabit?.motivationalQuote ?? '',
     },
   })
 
@@ -114,8 +122,17 @@ export default function HabitForm() {
       updatedAt: new Date().toISOString(),
     }
 
-    await addHabit(newHabit)
-    closeCreateHabit()
+    if (existingHabit) {
+      await updateHabit({
+        ...newHabit,
+        id: existingHabit.id,
+        createdAt: existingHabit.createdAt,
+      })
+      closeEditHabit()
+    } else {
+      await addHabit(newHabit)
+      closeCreateHabit()
+    }
   }
 
   return (

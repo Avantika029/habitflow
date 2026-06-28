@@ -7,6 +7,7 @@ import HabitCard from '@/components/habits/HabitCard'
 import StatsHeader from '@/components/dashboard/StatsHeader'
 import { Plus } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { useStreaks } from '@/lib/hooks/useHabits'
 
 function getGreeting(): string {
   const h = new Date().getHours()
