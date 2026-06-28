@@ -1,11 +1,12 @@
 'use client'
 
 import { useEffect, useMemo } from 'react'
-import { useHabitStore } from '@/lib/store'
+import { useHabitStore, useUIStore } from '@/lib/store'
 import { todayISO } from '@/lib/utils/dateUtils'
 import HabitCard from '@/components/habits/HabitCard'
 import StatsHeader from '@/components/dashboard/StatsHeader'
 import { Plus } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 function getGreeting(): string {
   const h = new Date().getHours()
@@ -16,6 +17,7 @@ function getGreeting(): string {
 
 export default function DashboardPage() {
   const { habits, todayLogs, loadHabits, loadTodayLogs } = useHabitStore()
+  const { openCreateHabit } = useUIStore()
   const today = todayISO()
 
   useEffect(() => {
@@ -62,13 +64,16 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Floating add button */}
-      <button
-        className="fixed right-8 bottom-8 flex h-14 w-14 items-center justify-center rounded-full bg-(--accent) text-white shadow-lg transition-transform duration-200 hover:scale-110"
+      {/* Floating + button — now opens the modal */}
+      <motion.button
+        onClick={openCreateHabit}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95 }}
+        className="fixed right-8 bottom-8 flex h-14 w-14 items-center justify-center rounded-full bg-(--accent) text-white shadow-lg"
         aria-label="Add habit"
       >
         <Plus size={24} />
-      </button>
+      </motion.button>
     </div>
   )
 }

@@ -1,5 +1,6 @@
 'use client'
 
+import { useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTheme } from 'next-themes'
@@ -26,6 +27,14 @@ const navLinks = [
 export default function Sidebar() {
   const pathname = usePathname()
   const { theme, setTheme } = useTheme()
+
+  // useSyncExternalStore: server snapshot = false, client snapshot = true
+  // This avoids useState + useEffect entirely — no ESLint warning, no hydration mismatch
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  )
 
   return (
     <aside className="flex h-screen w-64 shrink-0 flex-col border-r border-stone-200 bg-white dark:border-stone-800 dark:bg-(--surface-card)">
@@ -61,15 +70,17 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Dark mode toggle */}
+      {/* Dark mode toggle — only shown after client mounts */}
       <div className="border-t border-stone-200 p-4 dark:border-stone-800">
-        <button
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-(--text-secondary) transition-all duration-150 hover:bg-(--surface-hover)"
-        >
-          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-          {theme === 'dark' ? 'Light mode' : 'Dark mode'}
-        </button>
+        {mounted && (
+          <button
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-(--text-secondary) transition-all duration-150 hover:bg-(--surface-hover)"
+          >
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+          </button>
+        )}
       </div>
     </aside>
   )

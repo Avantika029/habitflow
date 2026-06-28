@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import Providers from '@/components/ui/Providers'
 import Sidebar from '@/components/ui/Sidebar'
+import HabitModal from '@/components/habits/HabitModal'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -22,10 +23,12 @@ export default function RootLayout({
         <Providers>
           <div className="flex h-screen overflow-hidden">
             <Sidebar />
-            <main className="flex-1 overflow-y-auto bg-[var(--surface-bg)]">
+            <main className="flex-1 overflow-y-auto bg-(--surface-bg)">
               {children}
             </main>
           </div>
+          {/* Modal lives outside the flex layout so it overlays everything */}
+          <HabitModal />
         </Providers>
       </body>
     </html>
