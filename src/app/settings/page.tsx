@@ -5,6 +5,7 @@ import { useTheme } from 'next-themes'
 import { Sun, Moon, Monitor, Download, Trash2 } from 'lucide-react'
 import { useHabitStore } from '@/lib/store'
 import { getAllLogs } from '@/lib/db'
+import ThemePicker from '@/components/settings/ThemePicker'
 
 const ACCENT_COLORS = [
   { label: 'Violet', value: '#7c3aed' },
@@ -65,7 +66,16 @@ export default function SettingsPage() {
         Settings
       </h1>
 
-      {/* Theme */}
+      {/* Style theme */}
+      <div className="mb-4 rounded-2xl border border-stone-100 bg-white p-5 dark:border-stone-800 dark:bg-(--surface-card)">
+        <SectionTitle>Style theme</SectionTitle>
+        <p className="mb-3 text-xs text-(--text-muted)">
+          Choose your vibe — switches the entire colour palette instantly
+        </p>
+        <ThemePicker />
+      </div>
+
+      {/* Light / Dark / System */}
       <div className="mb-4 rounded-2xl border border-stone-100 bg-white p-5 dark:border-stone-800 dark:bg-(--surface-card)">
         <SectionTitle>Appearance</SectionTitle>
         {mounted && (

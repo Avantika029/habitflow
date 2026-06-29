@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 
+/* ─── DEFAULT THEME (neutral) ──────────────────────────── */
 :root {
   --color-lavender: #ede9fe;
   --color-mint: #d1fae5;
@@ -18,11 +19,87 @@
 
   --accent: #7c3aed;
   --accent-light: #ede9fe;
+  --accent-gradient: linear-gradient(135deg, #7c3aed, #a78bfa);
 
   --radius-card: 16px;
-  --radius-btn: 10px;
+  --sidebar-bg: #ffffff;
+  --sidebar-border: #e7e5e4;
+  --font-display: 'Inter', system-ui, sans-serif;
 }
 
+/* ─── BLOOM THEME (light) ───────────────────────────────── */
+[data-theme='bloom'] {
+  --surface-bg: #fff5f9;
+  --surface-card: #ffffff;
+  --surface-hover: #fce7f3;
+
+  --text-primary: #4a1028;
+  --text-secondary: #9d174d;
+  --text-muted: #f9a8d4;
+
+  --accent: #db2777;
+  --accent-light: #fce7f3;
+  --accent-gradient: linear-gradient(135deg, #db2777, #f472b6);
+
+  --sidebar-bg: #fff0f6;
+  --sidebar-border: #fbcfe8;
+}
+
+/* ─── BLOOM DARK ─────────────────────────────────────────── */
+[data-theme='bloom'].dark,
+.dark [data-theme='bloom'] {
+  --surface-bg: #1a0a10;
+  --surface-card: #2d1020;
+  --surface-hover: #3d1530;
+
+  --text-primary: #fce7f3;
+  --text-secondary: #f9a8d4;
+  --text-muted: #9d174d;
+
+  --accent: #f472b6;
+  --accent-light: #3d1535;
+
+  --sidebar-bg: #220d18;
+  --sidebar-border: #4a1028;
+}
+
+/* ─── FORGE THEME (light) ───────────────────────────────── */
+[data-theme='forge'] {
+  --surface-bg: #f5f3ff;
+  --surface-card: #ffffff;
+  --surface-hover: #ede9fe;
+
+  --text-primary: #1e1b4b;
+  --text-secondary: #3730a3;
+  --text-muted: #a5b4fc;
+
+  --accent: #4f46e5;
+  --accent-light: #e0e7ff;
+  --accent-gradient: linear-gradient(135deg, #4f46e5, #7c3aed);
+
+  --sidebar-bg: #eef2ff;
+  --sidebar-border: #c7d2fe;
+}
+
+/* ─── FORGE DARK ─────────────────────────────────────────── */
+[data-theme='forge'].dark,
+.dark [data-theme='forge'] {
+  --surface-bg: #0d0b1e;
+  --surface-card: #13102e;
+  --surface-hover: #1e1b4b;
+
+  --text-primary: #e0e7ff;
+  --text-secondary: #a5b4fc;
+  --text-muted: #3730a3;
+
+  --accent: #818cf8;
+  --accent-light: #1e1b4b;
+
+  --sidebar-bg: #0f0c22;
+  --sidebar-border: #1e1b4b;
+}
+
+/* ─── DARK MODE (default theme) ─────────────────────────── */
 .dark {
   --surface-bg: #0f0f10;
   --surface-card: #1a1a1f;
@@ -31,8 +108,11 @@
   --text-secondary: #a8a29e;
   --text-muted: #57534e;
   --accent-light: #2e1065;
+  --sidebar-bg: #1a1a1f;
+  --sidebar-border: #27272a;
 }
 
+/* ─── ANIMATIONS ─────────────────────────────────────────── */
 @theme {
   --animate-fade-in: fadeIn 0.3s ease-out;
   --animate-slide-up: slideUp 0.3s ease-out;
@@ -79,19 +159,23 @@
   }
 }
 
+/* ─── BASE STYLES ────────────────────────────────────────── */
 * {
   box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
 }
 
 body {
   background-color: var(--surface-bg);
   color: var(--text-primary);
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: var(--font-display, 'Inter', system-ui, sans-serif);
   -webkit-font-smoothing: antialiased;
-}
-
-html {
-  scroll-behavior: smooth;
 }
 
 button {

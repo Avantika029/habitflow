@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import Providers from '@/components/ui/Providers'
 import Sidebar from '@/components/ui/Sidebar'
 import HabitModal from '@/components/habits/HabitModal'
+import ThemeInitializer from '@/components/ui/ThemeInitializer'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -21,13 +22,14 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <Providers>
+          {/* Restores saved theme from localStorage on every load */}
+          <ThemeInitializer />
           <div className="flex h-screen overflow-hidden">
             <Sidebar />
-            <main className="flex-1 overflow-y-auto bg-(--surface-bg)">
+            <main className="flex-1 overflow-y-auto bg-(--surface-bg) transition-colors duration-300">
               {children}
             </main>
           </div>
-          {/* Modal lives outside the flex layout so it overlays everything */}
           <HabitModal />
         </Providers>
       </body>

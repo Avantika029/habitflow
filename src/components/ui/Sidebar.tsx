@@ -28,8 +28,6 @@ export default function Sidebar() {
   const pathname = usePathname()
   const { theme, setTheme } = useTheme()
 
-  // useSyncExternalStore: server snapshot = false, client snapshot = true
-  // This avoids useState + useEffect entirely — no ESLint warning, no hydration mismatch
   const mounted = useSyncExternalStore(
     () => () => {},
     () => true,
@@ -37,7 +35,13 @@ export default function Sidebar() {
   )
 
   return (
-    <aside className="flex h-screen w-64 shrink-0 flex-col border-r border-stone-200 bg-white dark:border-stone-800 dark:bg-(--surface-card)">
+    <aside
+      className="flex h-screen w-64 shrink-0 flex-col border-r transition-colors duration-300"
+      style={{
+        backgroundColor: 'var(--sidebar-bg)',
+        borderColor: 'var(--sidebar-border)',
+      }}
+    >
       {/* Logo */}
       <div className="flex items-center gap-3 p-6">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--accent)">
@@ -70,8 +74,11 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Dark mode toggle — only shown after client mounts */}
-      <div className="border-t border-stone-200 p-4 dark:border-stone-800">
+      {/* Dark mode toggle */}
+      <div
+        className="border-t p-4"
+        style={{ borderColor: 'var(--sidebar-border)' }}
+      >
         {mounted && (
           <button
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
