@@ -106,3 +106,19 @@ export async function saveSettings(settings: UserSettings): Promise<void> {
     id: 'user-settings',
   } as UserSettings & { id: string })
 }
+// Add this function at the bottom of the file:
+export async function getLogsForMonth(
+  year: number,
+  month: number
+): Promise<HabitLog[]> {
+  const db = await getDB()
+  const allLogs = await db.getAll('logs')
+  return allLogs.filter((log) => {
+    const d = new Date(log.date)
+    return d.getFullYear() === year && d.getMonth() === month
+  })
+}
+export async function getAllLogs(): Promise<HabitLog[]> {
+  const db = await getDB()
+  return db.getAll('logs')
+}
