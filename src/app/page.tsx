@@ -1,13 +1,13 @@
 'use client'
 
 import { useEffect, useMemo } from 'react'
+import { motion } from 'framer-motion'
+import { Plus } from 'lucide-react'
 import { useHabitStore, useUIStore } from '@/lib/store'
+import { useStreaks } from '@/lib/hooks/useHabits'
 import { todayISO } from '@/lib/utils/dateUtils'
 import HabitCard from '@/components/habits/HabitCard'
 import StatsHeader from '@/components/dashboard/StatsHeader'
-import { Plus } from 'lucide-react'
-import { motion } from 'framer-motion'
-import { useStreaks } from '@/lib/hooks/useHabits'
 
 function getGreeting(): string {
   const h = new Date().getHours()
@@ -26,14 +26,22 @@ export default function DashboardPage() {
     loadTodayLogs()
   }, [loadHabits, loadTodayLogs])
 
+  // Only show habits that are not archived
   const activeHabits = useMemo(
     () => habits.filter((h) => !h.isArchived),
     [habits]
   )
 
+  // Load streak counts for every habit
+  const streaks = useStreaks()
+
+  // Only count completions for habits that still exist
   const completedCount = useMemo(
-    () => todayLogs.filter((l) => l.completed).length,
-    [todayLogs]
+    () =>
+      todayLogs.filter(
+        (l) => l.completed && activeHabits.some((h) => h.id === l.habitId)
+      ).length,
+    [todayLogs, activeHabits]
   )
 
   return (
@@ -59,13 +67,18 @@ export default function DashboardPage() {
               (l) => l.habitId === habit.id && l.date === today
             )
             return (
-              <HabitCard key={habit.id} habit={habit} log={log} streak={0} />
+              <HabitCard
+                key={habit.id}
+                habit={habit}
+                log={log}
+                streak={streaks[habit.id] ?? 0}
+              />
             )
           })
         )}
       </div>
 
-      {/* Floating + button — now opens the modal */}
+      {/* Floating + button */}
       <motion.button
         onClick={openCreateHabit}
         whileHover={{ scale: 1.1 }}

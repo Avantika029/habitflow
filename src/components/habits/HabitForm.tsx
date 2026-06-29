@@ -280,7 +280,11 @@ export default function HabitForm({
           disabled={isSubmitting}
           className="flex-1 rounded-xl bg-(--accent) py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {isSubmitting ? 'Saving...' : 'Create habit'}
+          {isSubmitting
+            ? 'Saving...'
+            : existingHabit
+              ? 'Update habit'
+              : 'Create habit'}
         </button>
       </div>
     </form>
