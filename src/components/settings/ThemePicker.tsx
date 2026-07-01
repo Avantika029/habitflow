@@ -25,20 +25,20 @@ const THEMES: {
   {
     id: 'bloom',
     name: '🌸 Bloom',
-    tagline: 'Soft, warm & feminine',
-    preview: ['#db2777', '#f472b6', '#fce7f3', '#fff5f9'],
-    bg: 'linear-gradient(135deg, #fff5f9, #fce7f3)',
-    text: '#9d174d',
-    border: '#fbcfe8',
+    tagline: 'Soft pink, mint & dreamy',
+    preview: ['#f9b2d7', '#cfecf3', '#daf9de', '#f6ffdc'],
+    bg: 'linear-gradient(135deg, #fdf4f9, #f0fbfc)',
+    text: '#5a1a3a',
+    border: '#f9b2d7',
   },
   {
     id: 'forge',
-    name: '⚡ Forge',
-    tagline: 'Bold, sharp & powerful',
-    preview: ['#4f46e5', '#818cf8', '#1e1b4b', '#0d0b1e'],
-    bg: 'linear-gradient(135deg, #0d0b1e, #1e1b4b)',
-    text: '#a5b4fc',
-    border: '#3730a3',
+    name: '🍂 Forge',
+    tagline: 'Forest, terracotta & warm earth',
+    preview: ['#607456', '#eee0cc', '#ba6a4c', '#7b2525'],
+    bg: 'linear-gradient(135deg, #f7f3ee, #eee0cc)',
+    text: '#2e1a0e',
+    border: '#ba6a4c',
   },
 ]
 
@@ -61,7 +61,6 @@ export default function ThemePicker() {
               borderColor: isActive ? theme.preview[0] : theme.border,
             }}
           >
-            {/* Active checkmark */}
             {isActive && (
               <div
                 className="absolute top-3 right-3 flex h-6 w-6 items-center justify-center rounded-full"
@@ -71,7 +70,6 @@ export default function ThemePicker() {
               </div>
             )}
 
-            {/* Theme name + tagline */}
             <p
               className="mb-0.5 text-sm font-semibold"
               style={{ color: theme.text }}
@@ -85,12 +83,11 @@ export default function ThemePicker() {
               {theme.tagline}
             </p>
 
-            {/* Colour swatch row */}
             <div className="flex gap-2">
               {theme.preview.map((color, i) => (
                 <div
                   key={i}
-                  className="h-6 w-6 rounded-full border border-white/20"
+                  className="h-6 w-6 rounded-full border border-white/30 shadow-sm"
                   style={{ backgroundColor: color }}
                 />
               ))}

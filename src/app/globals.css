@@ -2,13 +2,6 @@
 
 /* ─── DEFAULT THEME (neutral) ──────────────────────────── */
 :root {
-  --color-lavender: #ede9fe;
-  --color-mint: #d1fae5;
-  --color-peach: #fee2e2;
-  --color-sky: #dbeafe;
-  --color-rose: #fce7f3;
-  --color-lemon: #fef9c3;
-
   --surface-bg: #fafaf9;
   --surface-card: #ffffff;
   --surface-hover: #f5f5f4;
@@ -21,82 +14,93 @@
   --accent-light: #ede9fe;
   --accent-gradient: linear-gradient(135deg, #7c3aed, #a78bfa);
 
-  --radius-card: 16px;
   --sidebar-bg: #ffffff;
   --sidebar-border: #e7e5e4;
   --font-display: 'Inter', system-ui, sans-serif;
 }
 
-/* ─── BLOOM THEME (light) ───────────────────────────────── */
+/* ─── BLOOM THEME — colorhunt.co/palette/f9b2d7cfecf3daf9def6ffdc ── */
+/* F9B2D7 = pink, CFE CF3 = light blue, DAF9DE = mint, F6FFDC = lemon */
 [data-theme='bloom'] {
-  --surface-bg: #fff5f9;
-  --surface-card: #ffffff;
-  --surface-hover: #fce7f3;
+  --surface-bg: #fdf4f9;
+  --surface-card: #fff8fb;
+  --surface-hover: #fce4f0;
 
-  --text-primary: #4a1028;
-  --text-secondary: #9d174d;
-  --text-muted: #f9a8d4;
+  --text-primary: #5a1a3a;
+  --text-secondary: #8b3a6a;
+  --text-muted: #c47a9a;
 
-  --accent: #db2777;
-  --accent-light: #fce7f3;
-  --accent-gradient: linear-gradient(135deg, #db2777, #f472b6);
+  --accent: #f9b2d7;
+  --accent-light: #fce4f0;
+  --accent-gradient: linear-gradient(135deg, #f9b2d7, #daf9de);
 
-  --sidebar-bg: #fff0f6;
-  --sidebar-border: #fbcfe8;
+  --sidebar-bg: #fff0f8;
+  --sidebar-border: #f9b2d7;
+
+  --bloom-pink: #f9b2d7;
+  --bloom-blue: #cfecf3;
+  --bloom-mint: #daf9de;
+  --bloom-lemon: #f6ffdc;
 }
 
 /* ─── BLOOM DARK ─────────────────────────────────────────── */
 [data-theme='bloom'].dark,
 .dark [data-theme='bloom'] {
-  --surface-bg: #1a0a10;
-  --surface-card: #2d1020;
+  --surface-bg: #1a0a12;
+  --surface-card: #2a1020;
   --surface-hover: #3d1530;
 
-  --text-primary: #fce7f3;
-  --text-secondary: #f9a8d4;
-  --text-muted: #9d174d;
+  --text-primary: #fce4f0;
+  --text-secondary: #f9b2d7;
+  --text-muted: #8b3a6a;
 
-  --accent: #f472b6;
-  --accent-light: #3d1535;
+  --accent: #f9b2d7;
+  --accent-light: #3d1530;
 
-  --sidebar-bg: #220d18;
-  --sidebar-border: #4a1028;
+  --sidebar-bg: #200c18;
+  --sidebar-border: #5a1a3a;
 }
 
-/* ─── FORGE THEME (light) ───────────────────────────────── */
+/* ─── FORGE THEME — colorhunt.co/palette/607456eee0ccba6a4c7b2525 ── */
+/* 607456 = forest green, EEE0CC = warm cream, BA6A4C = terracotta, 7B2525 = deep red */
 [data-theme='forge'] {
-  --surface-bg: #f5f3ff;
-  --surface-card: #ffffff;
-  --surface-hover: #ede9fe;
+  --surface-bg: #f7f3ee;
+  --surface-card: #fdfaf6;
+  --surface-hover: #eee0cc;
 
-  --text-primary: #1e1b4b;
-  --text-secondary: #3730a3;
-  --text-muted: #a5b4fc;
+  --text-primary: #2e1a0e;
+  --text-secondary: #607456;
+  --text-muted: #ba6a4c;
 
-  --accent: #4f46e5;
-  --accent-light: #e0e7ff;
-  --accent-gradient: linear-gradient(135deg, #4f46e5, #7c3aed);
+  --accent: #7b2525;
+  --accent-light: #f3ddd0;
+  --accent-gradient: linear-gradient(135deg, #7b2525, #ba6a4c);
 
-  --sidebar-bg: #eef2ff;
-  --sidebar-border: #c7d2fe;
+  --sidebar-bg: #eee0cc;
+  --sidebar-border: #ba6a4c;
+
+  --forge-green: #607456;
+  --forge-cream: #eee0cc;
+  --forge-terra: #ba6a4c;
+  --forge-red: #7b2525;
 }
 
 /* ─── FORGE DARK ─────────────────────────────────────────── */
 [data-theme='forge'].dark,
 .dark [data-theme='forge'] {
-  --surface-bg: #0d0b1e;
-  --surface-card: #13102e;
-  --surface-hover: #1e1b4b;
+  --surface-bg: #1a0f0a;
+  --surface-card: #251510;
+  --surface-hover: #3a2018;
 
-  --text-primary: #e0e7ff;
-  --text-secondary: #a5b4fc;
-  --text-muted: #3730a3;
+  --text-primary: #eee0cc;
+  --text-secondary: #ba6a4c;
+  --text-muted: #607456;
 
-  --accent: #818cf8;
-  --accent-light: #1e1b4b;
+  --accent: #ba6a4c;
+  --accent-light: #3a2018;
 
-  --sidebar-bg: #0f0c22;
-  --sidebar-border: #1e1b4b;
+  --sidebar-bg: #1e1008;
+  --sidebar-border: #3a2018;
 }
 
 /* ─── DARK MODE (default theme) ─────────────────────────── */

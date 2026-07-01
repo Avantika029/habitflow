@@ -1,3 +1,5 @@
 export { useHabitStore } from './habitStore'
 export { useUIStore } from './uiStore'
 export { useThemeStore } from './themeStore'
+export { useGamificationStore } from './gamificationStore'
+export type { AppTheme } from './themeStore'

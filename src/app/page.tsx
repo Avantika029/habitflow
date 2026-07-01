@@ -16,11 +16,14 @@ import {
   verticalListSortingStrategy,
   arrayMove,
 } from '@dnd-kit/sortable'
-import { useHabitStore, useUIStore } from '@/lib/store'
+import { useHabitStore, useUIStore, useGamificationStore } from '@/lib/store'
 import { useStreaks } from '@/lib/hooks/useHabits'
 import { todayISO } from '@/lib/utils/dateUtils'
 import SortableHabitCard from '@/components/habits/SortableHabitCard'
 import StatsHeader from '@/components/dashboard/StatsHeader'
+import XPBar from '@/components/dashboard/XPBar'
+import AchievementToast from '@/components/dashboard/AchievementToast'
+import { Achievement } from '@/lib/store/gamificationStore'
 
 function getGreeting(): string {
   const h = new Date().getHours()
@@ -33,13 +36,25 @@ export default function DashboardPage() {
   const { habits, todayLogs, loadHabits, loadTodayLogs, reorderHabits } =
     useHabitStore()
   const { openCreateHabit } = useUIStore()
+  const { achievements } = useGamificationStore()
   const streaks = useStreaks()
   const today = todayISO()
+  const [toastAchievement, setToastAchievement] = useState<Achievement | null>(
+    null
+  )
 
   useEffect(() => {
     loadHabits()
     loadTodayLogs()
   }, [loadHabits, loadTodayLogs])
+
+  // Show toast when a new achievement is unlocked
+  useEffect(() => {
+    const latest = achievements
+      .filter((a) => a.unlockedAt)
+      .sort((a, b) => (b.unlockedAt! > a.unlockedAt! ? 1 : -1))[0]
+    if (latest) setToastAchievement(latest)
+  }, [achievements])
 
   const activeHabits = useMemo(
     () => habits.filter((h) => !h.isArchived),
@@ -55,19 +70,15 @@ export default function DashboardPage() {
   )
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
-    })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   )
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
     if (!over || active.id === over.id) return
-
     const oldIndex = activeHabits.findIndex((h) => h.id === active.id)
     const newIndex = activeHabits.findIndex((h) => h.id === over.id)
-    const reordered = arrayMove(activeHabits, oldIndex, newIndex)
-    reorderHabits(reordered)
+    reorderHabits(arrayMove(activeHabits, oldIndex, newIndex))
   }
 
   return (
@@ -77,6 +88,8 @@ export default function DashboardPage() {
         total={activeHabits.length}
         greeting={getGreeting()}
       />
+
+      <XPBar />
 
       <DndContext
         sensors={sensors}
@@ -125,6 +138,12 @@ export default function DashboardPage() {
       >
         <Plus size={24} />
       </motion.button>
+
+      {/* Achievement toast */}
+      <AchievementToast
+        achievement={toastAchievement}
+        onClose={() => setToastAchievement(null)}
+      />
     </div>
   )
 }

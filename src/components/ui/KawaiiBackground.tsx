@@ -31,98 +31,102 @@ export default function KawaiiBackground() {
 
       {/* Blob 1 — top left */}
       <div
-        className="kawaii-1 absolute -top-20 -left-20 h-72 w-72 rounded-full opacity-20"
+        className="kawaii-1 absolute -top-20 -left-20 h-72 w-72 rounded-full"
         style={{
           background:
             'radial-gradient(circle, var(--accent) 0%, transparent 70%)',
+          opacity: 0.12,
         }}
       />
 
       {/* Blob 2 — top right */}
       <div
-        className="kawaii-2 absolute -top-10 right-10 h-96 w-96 rounded-full opacity-15"
+        className="kawaii-2 absolute -top-10 right-10 h-96 w-96 rounded-full"
         style={{
           background:
             'radial-gradient(circle, var(--accent-light) 0%, transparent 70%)',
+          opacity: 0.18,
         }}
       />
 
       {/* Blob 3 — bottom left */}
       <div
-        className="kawaii-3 absolute bottom-20 -left-10 h-64 w-64 rounded-full opacity-20"
+        className="kawaii-3 absolute bottom-20 -left-10 h-64 w-64 rounded-full"
         style={{
           background:
             'radial-gradient(circle, var(--accent) 0%, transparent 70%)',
+          opacity: 0.1,
         }}
       />
 
       {/* Blob 4 — bottom right */}
       <div
-        className="kawaii-5 absolute right-20 -bottom-10 h-80 w-80 rounded-full opacity-15"
+        className="kawaii-5 absolute right-20 -bottom-10 h-80 w-80 rounded-full"
         style={{
           background:
             'radial-gradient(circle, var(--accent-light) 0%, transparent 70%)',
+          opacity: 0.15,
         }}
       />
 
-      {/* Floating symbols */}
+      {/* Floating symbols — all use accent colour so they switch with theme */}
       <span
-        className="kawaii-1 absolute top-[15%] left-[10%] text-3xl opacity-20"
-        style={{ color: 'var(--accent)' }}
+        className="kawaii-1 absolute top-[15%] left-[10%] text-3xl select-none"
+        style={{ color: 'var(--accent)', opacity: 0.18 }}
       >
         ✦
       </span>
       <span
-        className="kawaii-2 absolute top-[25%] right-[12%] text-2xl opacity-20"
-        style={{ color: 'var(--accent)' }}
+        className="kawaii-2 absolute top-[25%] right-[12%] text-2xl select-none"
+        style={{ color: 'var(--accent)', opacity: 0.18 }}
       >
         ♥
       </span>
       <span
-        className="kawaii-3 absolute top-[50%] left-[5%] text-xl opacity-15"
-        style={{ color: 'var(--accent)' }}
+        className="kawaii-3 absolute top-[50%] left-[5%] text-xl select-none"
+        style={{ color: 'var(--accent)', opacity: 0.15 }}
       >
         ✧
       </span>
       <span
-        className="kawaii-4 absolute top-[60%] right-[8%] text-3xl opacity-20"
-        style={{ color: 'var(--accent)' }}
+        className="kawaii-4 absolute top-[60%] right-[8%] text-3xl select-none"
+        style={{ color: 'var(--accent)', opacity: 0.18 }}
       >
         ✦
       </span>
       <span
-        className="kawaii-5 absolute top-[80%] left-[20%] text-2xl opacity-15"
-        style={{ color: 'var(--accent)' }}
+        className="kawaii-5 absolute top-[80%] left-[20%] text-2xl select-none"
+        style={{ color: 'var(--accent)', opacity: 0.15 }}
       >
         ♥
       </span>
       <span
-        className="kawaii-6 absolute top-[35%] right-[25%] text-lg opacity-20"
-        style={{ color: 'var(--accent)' }}
+        className="kawaii-6 absolute top-[35%] right-[25%] text-lg select-none"
+        style={{ color: 'var(--accent)', opacity: 0.18 }}
       >
         ✿
       </span>
       <span
-        className="kawaii-1 absolute top-[70%] right-[30%] text-xl opacity-15"
-        style={{ color: 'var(--accent)' }}
+        className="kawaii-1 absolute top-[70%] right-[30%] text-xl select-none"
+        style={{ color: 'var(--accent)', opacity: 0.15 }}
       >
         ✧
       </span>
       <span
-        className="kawaii-2 absolute top-[10%] left-[40%] text-2xl opacity-15"
-        style={{ color: 'var(--accent)' }}
+        className="kawaii-2 absolute top-[10%] left-[40%] text-2xl select-none"
+        style={{ color: 'var(--accent)', opacity: 0.15 }}
       >
         ✿
       </span>
       <span
-        className="kawaii-3 absolute top-[45%] left-[30%] text-lg opacity-10"
-        style={{ color: 'var(--accent)' }}
+        className="kawaii-3 absolute top-[45%] left-[30%] text-lg select-none"
+        style={{ color: 'var(--accent)', opacity: 0.1 }}
       >
         ♥
       </span>
       <span
-        className="kawaii-4 absolute top-[88%] right-[15%] text-xl opacity-15"
-        style={{ color: 'var(--accent)' }}
+        className="kawaii-4 absolute top-[88%] right-[15%] text-xl select-none"
+        style={{ color: 'var(--accent)', opacity: 0.15 }}
       >
         ✦
       </span>

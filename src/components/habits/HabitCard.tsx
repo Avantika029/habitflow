@@ -1,13 +1,16 @@
 'use client'
 
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Flame, Check, MoreVertical, Pencil, Trash2 } from 'lucide-react'
 import { clsx } from 'clsx'
-import { useState } from 'react'
 import confetti from 'canvas-confetti'
 import { Habit, HabitLog } from '@/types'
-import { useHabitStore, useUIStore } from '@/lib/store'
+import { useHabitStore, useUIStore, useGamificationStore } from '@/lib/store'
 import { todayISO } from '@/lib/utils/dateUtils'
+import { getXPForCompletion } from '@/lib/utils/xpUtils'
+import { calculateStreak } from '@/lib/utils/streakUtils'
+import { getLogsForHabit, getAllLogs } from '@/lib/db'
 
 interface HabitCardProps {
   habit: Habit
@@ -25,8 +28,8 @@ export default function HabitCard({ habit, log, streak }: HabitCardProps) {
     const wasCompleted = completed
     await toggleHabit(habit.id, todayISO())
 
-    // Fire confetti only when going incomplete → complete
     if (!wasCompleted) {
+      // Fire confetti
       confetti({
         particleCount: 80,
         spread: 60,
@@ -34,6 +37,17 @@ export default function HabitCard({ habit, log, streak }: HabitCardProps) {
         colors: [habit.color, '#a78bfa', '#34d399', '#fbbf24'],
         scalar: 0.9,
       })
+
+      // Award XP
+      const { addXP, checkAchievements } = useGamificationStore.getState()
+      addXP(getXPForCompletion(habit.difficulty))
+
+      // Check achievements
+      const logs = await getLogsForHabit(habit.id)
+      const streak = calculateStreak(logs)
+      const allLogs = await getAllLogs()
+      const totalCompletions = allLogs.filter((l) => l.completed).length
+      checkAchievements({ totalCompletions, longestStreak: streak })
     }
   }
 
@@ -100,7 +114,6 @@ export default function HabitCard({ habit, log, streak }: HabitCardProps) {
 
         {menuOpen && (
           <>
-            {/* Click outside to close */}
             <div
               className="fixed inset-0 z-10"
               onClick={() => setMenuOpen(false)}
