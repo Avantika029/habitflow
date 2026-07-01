@@ -4,6 +4,7 @@ import Providers from '@/components/ui/Providers'
 import Sidebar from '@/components/ui/Sidebar'
 import HabitModal from '@/components/habits/HabitModal'
 import ThemeInitializer from '@/components/ui/ThemeInitializer'
+import KawaiiBackground from '@/components/ui/KawaiiBackground'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -24,12 +25,19 @@ export default function RootLayout({
         <Providers>
           {/* Restores saved theme from localStorage on every load */}
           <ThemeInitializer />
-          <div className="flex h-screen overflow-hidden">
+
+          {/* Floating kawaii shapes in the background */}
+          <KawaiiBackground />
+
+          {/* Main app layout sits above the background */}
+          <div className="relative z-10 flex h-screen overflow-hidden">
             <Sidebar />
-            <main className="flex-1 overflow-y-auto bg-(--surface-bg) transition-colors duration-300">
+            <main className="flex-1 overflow-y-auto bg-(--surface-bg)/80 backdrop-blur-sm transition-colors duration-300">
               {children}
             </main>
           </div>
+
+          {/* Modal overlays everything */}
           <HabitModal />
         </Providers>
       </body>
