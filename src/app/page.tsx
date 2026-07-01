@@ -22,6 +22,7 @@ import { todayISO } from '@/lib/utils/dateUtils'
 import SortableHabitCard from '@/components/habits/SortableHabitCard'
 import StatsHeader from '@/components/dashboard/StatsHeader'
 import XPBar from '@/components/dashboard/XPBar'
+import WeeklyHeatmap from '@/components/dashboard/WeeklyHeatmap'
 import AchievementToast from '@/components/dashboard/AchievementToast'
 import { Achievement } from '@/lib/store/gamificationStore'
 
@@ -91,6 +92,8 @@ export default function DashboardPage() {
 
       <XPBar />
 
+      <WeeklyHeatmap />
+
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -128,7 +131,6 @@ export default function DashboardPage() {
         </SortableContext>
       </DndContext>
 
-      {/* Floating + button */}
       <motion.button
         onClick={openCreateHabit}
         whileHover={{ scale: 1.1 }}
@@ -139,7 +141,6 @@ export default function DashboardPage() {
         <Plus size={24} />
       </motion.button>
 
-      {/* Achievement toast */}
       <AchievementToast
         achievement={toastAchievement}
         onClose={() => setToastAchievement(null)}
