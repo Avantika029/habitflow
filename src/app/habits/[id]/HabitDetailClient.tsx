@@ -21,20 +21,6 @@ import {
 } from '@/lib/utils/streakUtils'
 import { todayISO } from '@/lib/utils/dateUtils'
 
-const MONTHS = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-]
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
 function getLast6Weeks(): string[][] {
@@ -44,7 +30,7 @@ function getLast6Weeks(): string[][] {
   const start = new Date(today)
   start.setDate(today.getDate() - 41)
   start.setDate(start.getDate() - start.getDay())
-  let current = new Date(start)
+  const current = new Date(start)
   while (current <= today) {
     const week: string[] = []
     for (let d = 0; d < 7; d++) {
@@ -56,7 +42,7 @@ function getLast6Weeks(): string[][] {
   return weeks
 }
 
-export default function HabitDetailPage() {
+export default function HabitDetailClient() {
   const params = useParams()
   const router = useRouter()
   const { habits, todayLogs, toggleHabit, loadHabits, loadTodayLogs } =
@@ -92,7 +78,6 @@ export default function HabitDetailPage() {
     (l) => l.habitId === habitId && l.date === today
   )
   const completedToday = todayLog?.completed ?? false
-
   const weeks = getLast6Weeks()
 
   function getCell(date: string) {
@@ -155,8 +140,7 @@ export default function HabitDetailPage() {
         onClick={() => toggleHabit(habit.id, today)}
         whileTap={{ scale: 0.97 }}
         className={clsx(
-          'mb-6 w-full rounded-2xl py-3.5 text-sm font-semibold',
-          'transition-all duration-200',
+          'mb-6 w-full rounded-2xl py-3.5 text-sm font-semibold transition-all duration-200',
           completedToday
             ? 'border-2 border-(--accent) bg-(--accent-light) text-(--accent)'
             : 'bg-(--accent) text-white'
@@ -209,7 +193,7 @@ export default function HabitDetailPage() {
         ))}
       </div>
 
-      {/* Mini heatmap — last 6 weeks */}
+      {/* Mini heatmap */}
       <div className="mb-6 rounded-2xl border border-stone-100 bg-white p-4 dark:border-stone-800 dark:bg-(--surface-card)">
         <h2 className="mb-3 text-sm font-semibold text-(--text-primary)">
           Last 6 weeks
