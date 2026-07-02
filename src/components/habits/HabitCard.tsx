@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Flame, Check, MoreVertical, Pencil, Trash2 } from 'lucide-react'
 import { clsx } from 'clsx'
@@ -19,17 +20,18 @@ interface HabitCardProps {
 }
 
 export default function HabitCard({ habit, log, streak }: HabitCardProps) {
+  const router = useRouter()
   const { toggleHabit, removeHabit } = useHabitStore()
   const { openEditHabit } = useUIStore()
   const completed = log?.completed ?? false
   const [menuOpen, setMenuOpen] = useState(false)
 
-  async function handleToggle() {
+  async function handleToggle(e: React.MouseEvent) {
+    e.stopPropagation()
     const wasCompleted = completed
     await toggleHabit(habit.id, todayISO())
 
     if (!wasCompleted) {
-      // Fire confetti
       confetti({
         particleCount: 80,
         spread: 60,
@@ -38,11 +40,9 @@ export default function HabitCard({ habit, log, streak }: HabitCardProps) {
         scalar: 0.9,
       })
 
-      // Award XP
       const { addXP, checkAchievements } = useGamificationStore.getState()
       addXP(getXPForCompletion(habit.difficulty))
 
-      // Check achievements
       const logs = await getLogsForHabit(habit.id)
       const streak = calculateStreak(logs)
       const allLogs = await getAllLogs()
@@ -51,11 +51,23 @@ export default function HabitCard({ habit, log, streak }: HabitCardProps) {
     }
   }
 
-  async function handleDelete() {
+  async function handleDelete(e: React.MouseEvent) {
+    e.stopPropagation()
     if (confirm(`Delete "${habit.name}"? This cannot be undone.`)) {
       await removeHabit(habit.id)
     }
     setMenuOpen(false)
+  }
+
+  function handleEdit(e: React.MouseEvent) {
+    e.stopPropagation()
+    openEditHabit(habit.id)
+    setMenuOpen(false)
+  }
+
+  function handleMenuToggle(e: React.MouseEvent) {
+    e.stopPropagation()
+    setMenuOpen((o) => !o)
   }
 
   return (
@@ -63,8 +75,9 @@ export default function HabitCard({ habit, log, streak }: HabitCardProps) {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: 'easeOut' }}
+      onClick={() => router.push(`/habits/${habit.id}`)}
       className={clsx(
-        'relative flex items-center gap-4 rounded-2xl border p-4',
+        'relative flex cursor-pointer items-center gap-4 rounded-2xl border p-4',
         'bg-white transition-all duration-200 dark:bg-(--surface-card)',
         completed
           ? 'border-(--accent) bg-(--accent-light) dark:bg-(--accent-light)'
@@ -105,7 +118,7 @@ export default function HabitCard({ habit, log, streak }: HabitCardProps) {
       {/* Three-dot menu */}
       <div className="relative">
         <button
-          onClick={() => setMenuOpen((o) => !o)}
+          onClick={handleMenuToggle}
           className="flex h-7 w-7 items-center justify-center rounded-lg text-(--text-muted) transition-colors hover:bg-(--surface-hover)"
           aria-label="Options"
         >
@@ -116,14 +129,14 @@ export default function HabitCard({ habit, log, streak }: HabitCardProps) {
           <>
             <div
               className="fixed inset-0 z-10"
-              onClick={() => setMenuOpen(false)}
+              onClick={(e) => {
+                e.stopPropagation()
+                setMenuOpen(false)
+              }}
             />
             <div className="absolute top-8 right-0 z-20 min-w-32 overflow-hidden rounded-xl border border-stone-200 bg-white py-1 shadow-lg dark:border-stone-700 dark:bg-(--surface-card)">
               <button
-                onClick={() => {
-                  openEditHabit(habit.id)
-                  setMenuOpen(false)
-                }}
+                onClick={handleEdit}
                 className="flex w-full items-center gap-2 px-3 py-2 text-sm text-(--text-secondary) transition-colors hover:bg-(--surface-hover)"
               >
                 <Pencil size={13} /> Edit

@@ -1,155 +1,301 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
+import { useParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Search, Plus, SlidersHorizontal } from 'lucide-react'
+import {
+  ArrowLeft,
+  Flame,
+  Trophy,
+  Calendar,
+  Target,
+  Pencil,
+} from 'lucide-react'
+import { clsx } from 'clsx'
 import { useHabitStore, useUIStore } from '@/lib/store'
-import { useStreaks } from '@/lib/hooks/useHabits'
+import { getLogsForHabit } from '@/lib/db'
+import { HabitLog } from '@/types'
+import {
+  calculateStreak,
+  calculateLongestStreak,
+} from '@/lib/utils/streakUtils'
 import { todayISO } from '@/lib/utils/dateUtils'
-import HabitCard from '@/components/habits/HabitCard'
 
-const CATEGORIES = [
-  'All',
-  'Fitness',
-  'Study',
-  'Mindfulness',
-  'Health',
-  'Productivity',
-  'Finance',
-  'Social',
-  'Creative',
-  'Other',
+const MONTHS = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ]
+const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
-export default function HabitsPage() {
-  const { habits, todayLogs, loadHabits, loadTodayLogs } = useHabitStore()
-  const { openCreateHabit } = useUIStore()
-  const streaks = useStreaks()
+function getLast6Weeks(): string[][] {
+  const weeks: string[][] = []
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const start = new Date(today)
+  start.setDate(today.getDate() - 41)
+  start.setDate(start.getDate() - start.getDay())
+  let current = new Date(start)
+  while (current <= today) {
+    const week: string[] = []
+    for (let d = 0; d < 7; d++) {
+      week.push(current.toISOString().split('T')[0])
+      current.setDate(current.getDate() + 1)
+    }
+    weeks.push(week)
+  }
+  return weeks
+}
+
+export default function HabitDetailPage() {
+  const params = useParams()
+  const router = useRouter()
+  const { habits, todayLogs, toggleHabit, loadHabits, loadTodayLogs } =
+    useHabitStore()
+  const { openEditHabit } = useUIStore()
+  const [logs, setLogs] = useState<HabitLog[]>([])
   const today = todayISO()
 
-  const [search, setSearch] = useState('')
-  const [activeCategory, setActiveCategory] = useState('All')
-  const [showArchived, setShowArchived] = useState(false)
+  const habitId = params.id as string
+  const habit = habits.find((h) => h.id === habitId)
 
   useEffect(() => {
     loadHabits()
     loadTodayLogs()
   }, [loadHabits, loadTodayLogs])
 
-  const filtered = useMemo(() => {
-    return habits.filter((h) => {
-      const matchesSearch = h.name.toLowerCase().includes(search.toLowerCase())
-      const matchesCategory =
-        activeCategory === 'All' || h.category === activeCategory
-      const matchesArchived = showArchived ? h.isArchived : !h.isArchived
-      return matchesSearch && matchesCategory && matchesArchived
-    })
-  }, [habits, search, activeCategory, showArchived])
+  useEffect(() => {
+    if (habitId) getLogsForHabit(habitId).then(setLogs)
+  }, [habitId])
+
+  const currentStreak = useMemo(() => calculateStreak(logs), [logs])
+  const longestStreak = useMemo(() => calculateLongestStreak(logs), [logs])
+  const totalCompletions = useMemo(
+    () => logs.filter((l) => l.completed).length,
+    [logs]
+  )
+  const completionRate = useMemo(() => {
+    if (logs.length === 0) return 0
+    return Math.round((totalCompletions / logs.length) * 100)
+  }, [logs, totalCompletions])
+
+  const todayLog = todayLogs.find(
+    (l) => l.habitId === habitId && l.date === today
+  )
+  const completedToday = todayLog?.completed ?? false
+
+  const weeks = getLast6Weeks()
+
+  function getCell(date: string) {
+    if (date > today) return 'future'
+    const log = logs.find((l) => l.date === date && l.completed)
+    return log ? 'done' : 'missed'
+  }
+
+  if (!habit) {
+    return (
+      <div className="mx-auto max-w-xl p-6 py-20 text-center">
+        <p className="mb-3 text-4xl">🔍</p>
+        <p className="text-(--text-muted)">Habit not found</p>
+        <button
+          onClick={() => router.push('/habits')}
+          className="mt-4 text-sm text-(--accent) hover:underline"
+        >
+          Back to habits
+        </button>
+      </div>
+    )
+  }
 
   return (
-    <div className="mx-auto max-w-2xl p-6">
+    <div className="mx-auto max-w-xl p-6">
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-(--text-primary)">
-            My Habits
-          </h1>
-          <p className="mt-1 text-sm text-(--text-muted)">
-            {habits.filter((h) => !h.isArchived).length} active habits
-          </p>
+      <div className="mb-6 flex items-center gap-3">
+        <button
+          onClick={() => router.back()}
+          className="flex h-9 w-9 items-center justify-center rounded-xl text-(--text-secondary) transition-colors hover:bg-(--surface-hover)"
+        >
+          <ArrowLeft size={18} />
+        </button>
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <div
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-xl"
+              style={{ backgroundColor: habit.color + '22' }}
+            >
+              {habit.icon}
+            </div>
+            <div>
+              <h1 className="text-xl font-semibold text-(--text-primary)">
+                {habit.name}
+              </h1>
+              <p className="text-xs text-(--text-muted)">{habit.category}</p>
+            </div>
+          </div>
         </div>
         <button
-          onClick={openCreateHabit}
-          className="flex items-center gap-2 rounded-xl bg-(--accent) px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
+          onClick={() => openEditHabit(habit.id)}
+          className="flex h-9 w-9 items-center justify-center rounded-xl text-(--text-secondary) transition-colors hover:bg-(--surface-hover)"
         >
-          <Plus size={16} /> New habit
+          <Pencil size={16} />
         </button>
       </div>
 
-      {/* Search bar */}
-      <div className="relative mb-4">
-        <Search
-          size={16}
-          className="absolute top-1/2 left-3 -translate-y-1/2 text-(--text-muted)"
-        />
-        <input
-          type="text"
-          placeholder="Search habits..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-xl border border-stone-200 bg-white py-2.5 pr-4 pl-9 text-sm text-(--text-primary) transition-all duration-150 outline-none placeholder:text-(--text-muted) focus:ring-2 focus:ring-(--accent) dark:border-stone-700 dark:bg-(--surface-card)"
-        />
-      </div>
+      {/* Complete today button */}
+      <motion.button
+        onClick={() => toggleHabit(habit.id, today)}
+        whileTap={{ scale: 0.97 }}
+        className={clsx(
+          'mb-6 w-full rounded-2xl py-3.5 text-sm font-semibold',
+          'transition-all duration-200',
+          completedToday
+            ? 'border-2 border-(--accent) bg-(--accent-light) text-(--accent)'
+            : 'bg-(--accent) text-white'
+        )}
+      >
+        {completedToday ? '✓ Completed today' : 'Mark as done today'}
+      </motion.button>
 
-      {/* Category filter tabs */}
-      <div className="scrollbar-hide mb-4 flex gap-2 overflow-x-auto pb-2">
-        {CATEGORIES.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
-            className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all duration-150 ${
-              activeCategory === cat
-                ? 'bg-(--accent) text-white'
-                : 'border border-stone-200 bg-white text-(--text-secondary) hover:border-(--accent) dark:border-stone-700 dark:bg-(--surface-card)'
-            }`}
+      {/* Stat cards */}
+      <div className="mb-6 grid grid-cols-2 gap-3">
+        {[
+          {
+            icon: <Flame size={16} />,
+            label: 'Current streak',
+            value: `${currentStreak} days`,
+            color: '#d97706',
+          },
+          {
+            icon: <Trophy size={16} />,
+            label: 'Best streak',
+            value: `${longestStreak} days`,
+            color: '#7c3aed',
+          },
+          {
+            icon: <Target size={16} />,
+            label: 'Completion rate',
+            value: `${completionRate}%`,
+            color: '#059669',
+          },
+          {
+            icon: <Calendar size={16} />,
+            label: 'Total done',
+            value: `${totalCompletions}`,
+            color: '#2563eb',
+          },
+        ].map(({ icon, label, value, color }) => (
+          <div
+            key={label}
+            className="rounded-2xl border border-stone-100 bg-white p-4 dark:border-stone-800 dark:bg-(--surface-card)"
           >
-            {cat}
-          </button>
+            <div
+              className="mb-2 flex h-8 w-8 items-center justify-center rounded-lg"
+              style={{ backgroundColor: color + '22', color }}
+            >
+              {icon}
+            </div>
+            <p className="text-xs text-(--text-muted)">{label}</p>
+            <p className="text-lg font-bold text-(--text-primary)">{value}</p>
+          </div>
         ))}
       </div>
 
-      {/* Archived toggle */}
-      <div className="mb-4 flex items-center gap-2">
-        <button
-          onClick={() => setShowArchived((v) => !v)}
-          className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all duration-150 ${
-            showArchived
-              ? 'border-(--accent) bg-(--accent) text-white'
-              : 'border-stone-200 bg-white text-(--text-secondary) dark:border-stone-700 dark:bg-(--surface-card)'
-          }`}
-        >
-          <SlidersHorizontal size={12} />
-          {showArchived ? 'Showing archived' : 'Show archived'}
-        </button>
+      {/* Mini heatmap — last 6 weeks */}
+      <div className="mb-6 rounded-2xl border border-stone-100 bg-white p-4 dark:border-stone-800 dark:bg-(--surface-card)">
+        <h2 className="mb-3 text-sm font-semibold text-(--text-primary)">
+          Last 6 weeks
+        </h2>
+        <div className="flex gap-1">
+          <div className="mr-1 flex flex-col gap-1">
+            {WEEKDAYS.map((d, i) => (
+              <div
+                key={i}
+                className="flex h-3 w-3 items-center justify-center text-[9px] text-(--text-muted)"
+              >
+                {i % 2 === 1 ? d : ''}
+              </div>
+            ))}
+          </div>
+          {weeks.map((week, wi) => (
+            <div key={wi} className="flex flex-col gap-1">
+              {week.map((date, di) => {
+                const cell = getCell(date)
+                const isToday = date === today
+                return (
+                  <motion.div
+                    key={di}
+                    whileHover={{ scale: 1.4 }}
+                    title={date}
+                    className="h-3 w-3 rounded-sm"
+                    style={{
+                      backgroundColor:
+                        cell === 'future'
+                          ? 'transparent'
+                          : cell === 'done'
+                            ? habit.color
+                            : 'var(--surface-hover)',
+                      outline: isToday ? `1.5px solid ${habit.color}` : 'none',
+                      outlineOffset: '1px',
+                    }}
+                  />
+                )
+              })}
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Habit list */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {filtered.length === 0 ? (
-          <div className="py-20 text-center text-(--text-muted)">
-            <p className="mb-3 text-4xl">🔍</p>
-            <p className="font-medium">
-              {search ? 'No habits match your search' : 'No habits here yet'}
-            </p>
-            {!search && (
-              <button
-                onClick={openCreateHabit}
-                className="mt-3 text-sm text-(--accent) hover:underline"
-              >
-                Create your first habit
-              </button>
-            )}
-          </div>
+      {/* Recent history */}
+      <div className="rounded-2xl border border-stone-100 bg-white p-4 dark:border-stone-800 dark:bg-(--surface-card)">
+        <h2 className="mb-3 text-sm font-semibold text-(--text-primary)">
+          Recent history
+        </h2>
+        {logs.length === 0 ? (
+          <p className="py-4 text-center text-sm text-(--text-muted)">
+            No history yet — complete this habit to start tracking
+          </p>
         ) : (
-          filtered.map((habit) => {
-            const log = todayLogs.find(
-              (l) => l.habitId === habit.id && l.date === today
-            )
-            return (
-              <motion.div
-                key={habit.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <HabitCard
-                  habit={habit}
-                  log={log}
-                  streak={streaks[habit.id] ?? 0}
-                />
-              </motion.div>
-            )
-          })
+          <div className="space-y-2">
+            {[...logs]
+              .sort((a, b) => (b.date > a.date ? 1 : -1))
+              .slice(0, 14)
+              .map((log) => (
+                <div
+                  key={log.id}
+                  className="flex items-center justify-between border-b border-stone-50 py-1.5 last:border-0 dark:border-stone-800"
+                >
+                  <span className="text-sm text-(--text-secondary)">
+                    {new Date(log.date + 'T00:00:00').toLocaleDateString(
+                      'en-US',
+                      {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric',
+                      }
+                    )}
+                  </span>
+                  <span
+                    className={clsx(
+                      'rounded-full px-2 py-0.5 text-xs font-medium',
+                      log.completed
+                        ? 'bg-(--accent-light) text-(--accent)'
+                        : 'bg-red-50 text-red-400'
+                    )}
+                  >
+                    {log.completed ? '✓ Done' : 'Missed'}
+                  </span>
+                </div>
+              ))}
+          </div>
         )}
       </div>
     </div>
