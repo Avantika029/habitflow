@@ -50,7 +50,12 @@ export default function SettingsPage() {
 
   function handleClearData() {
     if (confirm('Delete ALL habits and logs? This cannot be undone.')) {
+      // Clear IndexedDB
       indexedDB.deleteDatabase('habitflow-db')
+      // Clear all Zustand persisted stores from localStorage
+      localStorage.removeItem('habitflow-gamification')
+      localStorage.removeItem('habitflow-theme')
+      localStorage.removeItem('habitflow-accent')
       window.location.reload()
     }
   }

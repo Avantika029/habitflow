@@ -26,23 +26,23 @@ export default function WeatherWidget() {
           const data = await res.json()
           const code = data.current.weather_code
 
-          const getIcon = (code: number) => {
-            if (code === 0) return '☀️'
-            if (code <= 3) return '⛅'
-            if (code <= 49) return '🌫️'
-            if (code <= 69) return '🌧️'
-            if (code <= 79) return '🌨️'
-            if (code <= 99) return '⛈️'
+          const getIcon = (c: number) => {
+            if (c === 0) return '☀️'
+            if (c <= 3) return '⛅'
+            if (c <= 49) return '🌫️'
+            if (c <= 69) return '🌧️'
+            if (c <= 79) return '🌨️'
+            if (c <= 99) return '⛈️'
             return '🌤️'
           }
 
-          const getDesc = (code: number) => {
-            if (code === 0) return 'Clear sky'
-            if (code <= 3) return 'Partly cloudy'
-            if (code <= 49) return 'Foggy'
-            if (code <= 69) return 'Rainy'
-            if (code <= 79) return 'Snowy'
-            if (code <= 99) return 'Thunderstorm'
+          const getDesc = (c: number) => {
+            if (c === 0) return 'Clear sky'
+            if (c <= 3) return 'Partly cloudy'
+            if (c <= 49) return 'Foggy'
+            if (c <= 69) return 'Rainy'
+            if (c <= 79) return 'Snowy'
+            if (c <= 99) return 'Thunderstorm'
             return 'Mixed'
           }
 
@@ -68,42 +68,35 @@ export default function WeatherWidget() {
 
   if (loading) {
     return (
-      <div className="animate-pulse rounded-2xl border border-stone-100 bg-white p-4 dark:border-stone-800 dark:bg-(--surface-card)">
-        <div className="mb-3 h-4 w-20 rounded bg-(--surface-hover)" />
-        <div className="mb-2 h-8 w-24 rounded bg-(--surface-hover)" />
-        <div className="h-3 w-32 rounded bg-(--surface-hover)" />
+      <div className="h-full animate-pulse rounded-2xl border border-stone-100 bg-white px-3 py-2 dark:border-stone-800 dark:bg-(--surface-card)">
+        <div className="mb-2 h-3 w-16 rounded bg-(--surface-hover)" />
+        <div className="h-5 w-12 rounded bg-(--surface-hover)" />
       </div>
     )
   }
 
   if (error || !weather) {
     return (
-      <div className="rounded-2xl border border-stone-100 bg-white p-4 dark:border-stone-800 dark:bg-(--surface-card)">
-        <p className="text-xs text-(--text-muted)">Weather</p>
-        <p className="mt-1 text-sm text-(--text-secondary)">
-          Enable location to see weather
+      <div className="flex h-full items-center rounded-2xl border border-stone-100 bg-white px-3 py-2 dark:border-stone-800 dark:bg-(--surface-card)">
+        <p className="text-xs text-(--text-muted)">
+          Enable location for weather
         </p>
       </div>
     )
   }
 
   return (
-    <div className="rounded-2xl border border-stone-100 bg-white p-4 dark:border-stone-800 dark:bg-(--surface-card)">
-      <div className="mb-2 flex items-start justify-between">
-        <p className="text-xs font-medium text-orange-600 dark:text-orange-400">
-          Weather
+    <div className="flex h-full items-center gap-3 rounded-2xl border border-stone-100 bg-white px-3 py-2 dark:border-stone-800 dark:bg-(--surface-card)">
+      <span className="shrink-0 text-2xl">{weather.icon}</span>
+      <div className="min-w-0 flex-1">
+        <p className="text-lg leading-none font-bold text-(--text-primary)">
+          {weather.temp}°C
         </p>
-        <span className="text-2xl">{weather.icon}</span>
+        <p className="text-[10px] text-(--text-muted)">{weather.description}</p>
       </div>
-      <p className="mb-1 text-3xl font-bold text-(--text-primary)">
-        {weather.temp}°C
-      </p>
-      <p className="mb-3 text-xs text-(--text-secondary)">
-        {weather.description}
-      </p>
-      <div className="flex gap-3 text-xs text-(--text-muted)">
-        <span>💨 {weather.wind} km/h</span>
-        <span>💧 {weather.humidity}%</span>
+      <div className="shrink-0 text-right text-[10px] text-(--text-muted)">
+        <p>💨 {weather.wind}</p>
+        <p>💧 {weather.humidity}%</p>
       </div>
     </div>
   )

@@ -12,6 +12,7 @@ export interface Achievement {
   description: string
   icon: string
   unlockedAt?: string
+  toastShown?: boolean
 }
 
 const ALL_ACHIEVEMENTS: Achievement[] = [
@@ -74,14 +75,15 @@ const ALL_ACHIEVEMENTS: Achievement[] = [
 interface GamificationStore {
   totalXP: number
   achievements: Achievement[]
+  level: number
+  levelProgress: number
+  xpToNextLevel: number
   addXP: (amount: number) => void
   checkAchievements: (opts: {
     totalCompletions: number
     longestStreak: number
   }) => Achievement | null
-  level: number
-  levelProgress: number
-  xpToNextLevel: number
+  markToastShown: (id: string) => void
 }
 
 export const useGamificationStore = create<GamificationStore>()(
@@ -94,7 +96,7 @@ export const useGamificationStore = create<GamificationStore>()(
       xpToNextLevel: 100,
 
       addXP: (amount) => {
-        const newXP = get().totalXP + amount
+        const newXP = Math.max(0, get().totalXP + amount)
         set({
           totalXP: newXP,
           level: getLevelFromXP(newXP),
@@ -120,15 +122,29 @@ export const useGamificationStore = create<GamificationStore>()(
         let newlyUnlocked: Achievement | null = null
 
         const updated = achievements.map((a) => {
+          // Only unlock if not already unlocked
           if (!a.unlockedAt && conditions[a.id]) {
-            newlyUnlocked = { ...a, unlockedAt: new Date().toISOString() }
-            return newlyUnlocked
+            const unlocked = {
+              ...a,
+              unlockedAt: new Date().toISOString(),
+              toastShown: false,
+            }
+            newlyUnlocked = unlocked
+            return unlocked
           }
           return a
         })
 
         if (newlyUnlocked) set({ achievements: updated })
         return newlyUnlocked
+      },
+
+      markToastShown: (id) => {
+        set((state) => ({
+          achievements: state.achievements.map((a) =>
+            a.id === id ? { ...a, toastShown: true } : a
+          ),
+        }))
       },
     }),
     { name: 'habitflow-gamification' }

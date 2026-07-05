@@ -1,55 +1,159 @@
 'use client'
 
-import { useHabitStore, useUIStore } from '@/lib/store'
-import { Plus } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { RefreshCw, Heart } from 'lucide-react'
 
-const SUGGESTIONS = [
-  { icon: '🧘', name: 'Morning meditation', category: 'Mindfulness' },
-  { icon: '📚', name: 'Read 20 pages', category: 'Study' },
-  { icon: '💧', name: 'Drink 8 glasses', category: 'Health' },
-  { icon: '🏃', name: 'Evening walk', category: 'Fitness' },
-  { icon: '✍️', name: 'Journal entry', category: 'Creative' },
-  { icon: '😴', name: 'Sleep by 11pm', category: 'Health' },
+const CUTE_EMOJIS = [
+  '🐱',
+  '🐶',
+  '🐰',
+  '🐹',
+  '🐼',
+  '🦊',
+  '🐨',
+  '🦔',
+  '🐸',
+  '🦋',
+  '🐧',
+  '🦜',
+]
+const CAPTIONS = [
+  'You got this! 🌸',
+  'Keep going! ✨',
+  'So proud of you! 💕',
+  'One habit at a time 🌱',
+  'You are amazing! 🌟',
+  'Stay consistent! 🔥',
+  'Great job today! 🎉',
+  'Building greatness 💪',
 ]
 
-export default function SuggestedHabits() {
-  const { habits } = useHabitStore()
-  const { openCreateHabit } = useUIStore()
+const CUTE_IDS = [
+  237, 433, 577, 582, 593, 614, 659, 669, 783, 815, 816, 837, 866, 883, 1003,
+  1025, 1084, 274, 326, 360, 396, 400, 403, 429, 447, 490, 509, 524, 534,
+]
 
-  // Only show suggestions for habits the user doesn't have yet
-  const existing = habits.map((h) => h.name.toLowerCase())
-  const filtered = SUGGESTIONS.filter(
-    (s) => !existing.includes(s.name.toLowerCase())
-  ).slice(0, 3)
+function getRandom<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)]
+}
 
-  if (filtered.length === 0) return null
+function getImageUrl(id: number): string {
+  return `https://picsum.photos/id/${id}/240/130`
+}
+
+export default function CutePictures() {
+  // All state initializes to null/default on server
+  // Only set random values after mount to avoid hydration mismatch
+  const [mounted, setMounted] = useState(false)
+  const [imgId, setImgId] = useState(CUTE_IDS[0])
+  const [caption, setCaption] = useState(CAPTIONS[0])
+  const [emoji, setEmoji] = useState(CUTE_EMOJIS[0])
+  const [loading, setLoading] = useState(true)
+  const [liked, setLiked] = useState(false)
+  const [key, setKey] = useState(0)
+
+  // Set random values only after hydration is complete
+  useEffect(() => {
+    setImgId(getRandom(CUTE_IDS))
+    setCaption(getRandom(CAPTIONS))
+    setEmoji(getRandom(CUTE_EMOJIS))
+    setMounted(true)
+  }, [])
+
+  // Auto-refresh every 45 seconds
+  useEffect(() => {
+    if (!mounted) return
+    const interval = setInterval(refresh, 45000)
+    return () => clearInterval(interval)
+  }, [mounted])
+
+  function refresh() {
+    setLoading(true)
+    setLiked(false)
+    setImgId(getRandom(CUTE_IDS))
+    setCaption(getRandom(CAPTIONS))
+    setEmoji(getRandom(CUTE_EMOJIS))
+    setKey((k) => k + 1)
+  }
+
+  if (!mounted) {
+    return (
+      <div className="shrink-0 overflow-hidden rounded-2xl border border-stone-100 bg-white dark:border-stone-800 dark:bg-(--surface-card)">
+        <div
+          className="flex w-full items-center justify-center bg-(--surface-hover)"
+          style={{ height: '130px' }}
+        >
+          <span className="text-3xl">🐾</span>
+        </div>
+        <div className="px-3 py-2">
+          <p className="text-[11px] text-(--text-muted)">Loading cuteness...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="rounded-2xl border border-stone-100 bg-white p-4 dark:border-stone-800 dark:bg-(--surface-card)">
-      <div className="mb-3 flex items-center justify-between">
-        <p className="text-sm font-semibold text-(--text-primary)">
-          Should try! 💡
-        </p>
-      </div>
-      <div className="space-y-2">
-        {filtered.map((s) => (
-          <div
-            key={s.name}
-            className="group flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-(--surface-hover)"
-          >
-            <span className="text-lg">{s.icon}</span>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm text-(--text-primary)">{s.name}</p>
-              <p className="text-xs text-(--text-muted)">{s.category}</p>
-            </div>
-            <button
-              onClick={openCreateHabit}
-              className="flex h-6 w-6 items-center justify-center rounded-full bg-(--accent-light) text-(--accent) opacity-0 transition-opacity group-hover:opacity-100"
-            >
-              <Plus size={12} />
-            </button>
+    <div className="shrink-0 overflow-hidden rounded-2xl border border-stone-100 bg-white dark:border-stone-800 dark:bg-(--surface-card)">
+      {/* Image container */}
+      <div className="relative w-full" style={{ height: '130px' }}>
+        <AnimatePresence mode="wait">
+          <motion.img
+            key={key}
+            src={getImageUrl(imgId)}
+            alt="cute picture"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: loading ? 0 : 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            onLoad={() => setLoading(false)}
+            onError={() => setLoading(false)}
+            className="h-full w-full object-cover"
+          />
+        </AnimatePresence>
+
+        {/* Loading shimmer */}
+        {loading && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-(--surface-hover)">
+            <span className="text-3xl">{emoji}</span>
           </div>
-        ))}
+        )}
+
+        {/* Buttons */}
+        <div className="absolute top-2 right-2 flex gap-1">
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              setLiked((l) => !l)
+            }}
+            className="flex h-6 w-6 items-center justify-center rounded-full bg-black/30 transition-colors hover:bg-black/50"
+          >
+            <Heart
+              size={11}
+              className={liked ? 'fill-pink-400 text-pink-400' : 'text-white'}
+            />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              refresh()
+            }}
+            className="flex h-6 w-6 items-center justify-center rounded-full bg-black/30 text-white transition-colors hover:bg-black/50"
+          >
+            <RefreshCw size={11} />
+          </button>
+        </div>
+
+        {/* Gradient overlay */}
+        <div className="absolute right-0 bottom-0 left-0 h-8 bg-gradient-to-t from-black/30 to-transparent" />
+      </div>
+
+      {/* Caption */}
+      <div className="flex items-center gap-1.5 px-3 py-2">
+        <span className="text-sm">{emoji}</span>
+        <p className="flex-1 truncate text-[11px] font-medium text-(--text-primary)">
+          {caption}
+        </p>
       </div>
     </div>
   )

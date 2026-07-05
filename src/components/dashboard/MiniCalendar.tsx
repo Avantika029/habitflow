@@ -51,9 +51,9 @@ export default function MiniCalendar() {
   }
 
   return (
-    <div className="rounded-2xl border border-stone-100 bg-white p-4 dark:border-stone-800 dark:bg-(--surface-card)">
+    <div className="rounded-2xl border border-stone-100 bg-white px-3 py-3 dark:border-stone-800 dark:bg-(--surface-card)">
       {/* Header */}
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-2 flex items-center justify-between">
         <button
           onClick={prevMonth}
           className="flex h-6 w-6 items-center justify-center rounded-lg text-(--text-muted) transition-colors hover:bg-(--surface-hover)"
@@ -76,7 +76,7 @@ export default function MiniCalendar() {
         {WEEKDAYS.map((d, i) => (
           <div
             key={i}
-            className="text-center text-[10px] font-medium text-(--text-muted)"
+            className="py-0.5 text-center text-[9px] font-medium text-(--text-muted)"
           >
             {d}
           </div>
@@ -84,7 +84,7 @@ export default function MiniCalendar() {
       </div>
 
       {/* Day grid */}
-      <div className="grid grid-cols-7 gap-y-0.5">
+      <div className="grid grid-cols-7 gap-y-1">
         {blanks.map((_, i) => (
           <div key={`b${i}`} />
         ))}
@@ -97,11 +97,12 @@ export default function MiniCalendar() {
               key={d}
               className={clsx(
                 'flex h-6 items-center justify-center rounded-lg text-[11px]',
+                'cursor-pointer transition-colors',
                 isToday && 'bg-(--accent) font-bold text-white',
                 !isToday &&
                   !isFuture &&
-                  'cursor-pointer text-(--text-secondary) hover:bg-(--surface-hover)',
-                isFuture && 'text-(--text-muted) opacity-40'
+                  'text-(--text-secondary) hover:bg-(--surface-hover)',
+                isFuture && 'text-(--text-muted) opacity-30'
               )}
             >
               {d}

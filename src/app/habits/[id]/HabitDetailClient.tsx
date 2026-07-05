@@ -53,15 +53,21 @@ interface StatCardProps {
 
 function StatCard({ icon, label, value, color, bg }: StatCardProps) {
   return (
-    <div className="rounded-2xl border border-stone-100 bg-white p-4 dark:border-stone-800 dark:bg-(--surface-card)">
+    <div className="flex items-center gap-3 rounded-2xl border border-stone-100 bg-white p-3 dark:border-stone-800 dark:bg-(--surface-card)">
       <div
-        className="mb-3 flex h-8 w-8 items-center justify-center rounded-xl"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl"
         style={{ backgroundColor: bg, color }}
       >
         {icon}
       </div>
-      <p className="mb-1 text-xs text-(--text-muted)">{label}</p>
-      <p className="text-2xl font-bold text-(--text-primary)">{value}</p>
+      <div className="min-w-0">
+        <p className="mb-0.5 text-[10px] leading-none text-(--text-muted)">
+          {label}
+        </p>
+        <p className="text-lg leading-none font-bold text-(--text-primary)">
+          {value}
+        </p>
+      </div>
     </div>
   )
 }
@@ -104,28 +110,26 @@ export default function HabitDetailClient() {
   )
   const completedToday = todayLog?.completed ?? false
   const weeks = getLast8Weeks()
-
   const unlockedAchievements = achievements.filter((a) => a.unlockedAt)
-
-  function getCell(date: string) {
-    if (date > today) return 'future'
-    const log = logs.find((l) => l.date === date && l.completed)
-    return log ? 'done' : 'missed'
-  }
 
   const recentHistory = [...logs]
     .sort((a, b) => (b.date > a.date ? 1 : -1))
-    .slice(0, 7)
+    .slice(0, 6)
+
+  function getCell(date: string) {
+    if (date > today) return 'future'
+    return logs.find((l) => l.date === date && l.completed) ? 'done' : 'missed'
+  }
 
   if (!habit) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
-          <p className="mb-3 text-4xl">🔍</p>
-          <p className="mb-4 text-sm text-(--text-muted)">Habit not found</p>
+          <p className="mb-2 text-4xl">🔍</p>
+          <p className="mb-3 text-sm text-(--text-muted)">Habit not found</p>
           <button
             onClick={() => router.push('/habits')}
-            className="text-sm text-(--accent) hover:underline"
+            className="text-xs text-(--accent) hover:underline"
           >
             Back to habits
           </button>
@@ -135,110 +139,113 @@ export default function HabitDetailClient() {
   }
 
   return (
-    <div className="h-screen overflow-hidden p-4">
+    <div
+      style={{
+        height: '100vh',
+        overflow: 'hidden',
+        padding: '10px',
+        boxSizing: 'border-box',
+      }}
+    >
       <div
-        className="h-full gap-3"
         style={{
+          height: '100%',
           display: 'grid',
           gridTemplateColumns: 'repeat(12, 1fr)',
           gridTemplateRows: 'auto auto 1fr auto',
+          gap: '8px',
         }}
       >
-        {/* ── ROW 1: Back button + Habit header card ── */}
-
-        {/* Back */}
+        {/* ── ROW 1: Header ── */}
         <div
-          className="flex items-center gap-3"
           style={{ gridColumn: '1 / 13', gridRow: '1' }}
+          className="flex items-center gap-2"
         >
           <button
             onClick={() => router.back()}
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-stone-100 bg-white text-(--text-secondary) transition-colors hover:bg-(--surface-hover) dark:border-stone-800 dark:bg-(--surface-card)"
           >
-            <ArrowLeft size={16} />
+            <ArrowLeft size={15} />
           </button>
 
-          {/* Habit identity card — same style as dashboard habit card */}
-          <div className="flex flex-1 items-center gap-4 rounded-2xl border border-stone-100 bg-white p-3 dark:border-stone-800 dark:bg-(--surface-card)">
+          <div className="flex flex-1 items-center gap-3 rounded-2xl border border-stone-100 bg-white px-3 py-2 dark:border-stone-800 dark:bg-(--surface-card)">
             <div
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xl"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-lg"
               style={{ backgroundColor: habit.color + '22' }}
             >
               {habit.icon}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-base font-semibold text-(--text-primary)">
+              <p className="truncate text-sm font-semibold text-(--text-primary)">
                 {habit.name}
               </p>
-              <p className="text-xs text-(--text-muted)">
-                {habit.category} · {habit.difficulty}
+              <p className="text-[10px] text-(--text-muted)">
+                {habit.category} · {habit.difficulty} ·{' '}
+                {habit.schedule.frequency}
               </p>
             </div>
             {currentStreak > 0 && (
               <div className="flex shrink-0 items-center gap-1 text-orange-500">
-                <Flame size={14} />
-                <span className="text-sm font-bold">{currentStreak}</span>
+                <Flame size={13} />
+                <span className="text-xs font-bold">{currentStreak}</span>
               </div>
             )}
-            <button
-              onClick={() => openEditHabit(habit.id)}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-(--accent-light) text-(--accent) transition-opacity hover:opacity-80"
-            >
-              <Pencil size={13} />
-            </button>
           </div>
 
-          {/* Mark done button */}
+          <button
+            onClick={() => openEditHabit(habit.id)}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-(--accent-light) text-(--accent) transition-opacity hover:opacity-80"
+          >
+            <Pencil size={13} />
+          </button>
+
           <motion.button
             onClick={() => toggleHabit(habit.id, today)}
             whileTap={{ scale: 0.97 }}
             whileHover={{ scale: 1.02 }}
             className={clsx(
-              'shrink-0 rounded-2xl px-5 py-2.5 text-sm font-semibold transition-all duration-200',
+              'shrink-0 rounded-2xl px-4 py-2 text-xs font-semibold transition-all',
               completedToday
                 ? 'border-2 border-(--accent) bg-(--accent-light) text-(--accent)'
-                : 'bg-(--accent) text-white shadow-lg'
+                : 'bg-(--accent) text-white shadow-md'
             )}
           >
             {completedToday ? '✓ Done today' : 'Mark done'}
           </motion.button>
         </div>
 
-        {/* ── ROW 2: Stat cards (4 across) ── */}
+        {/* ── ROW 2: 4 stat cards ── */}
 
         <div style={{ gridColumn: '1 / 4', gridRow: '2' }}>
           <StatCard
-            icon={<Flame size={16} />}
+            icon={<Flame size={15} />}
             label="Current streak"
             value={`${currentStreak}d`}
             color="#d97706"
             bg="#d9780622"
           />
         </div>
-
         <div style={{ gridColumn: '4 / 7', gridRow: '2' }}>
           <StatCard
-            icon={<Trophy size={16} />}
+            icon={<Trophy size={15} />}
             label="Best streak"
             value={`${longestStreak}d`}
             color="#7c3aed"
             bg="#7c3aed22"
           />
         </div>
-
         <div style={{ gridColumn: '7 / 10', gridRow: '2' }}>
           <StatCard
-            icon={<Target size={16} />}
+            icon={<Target size={15} />}
             label="Completion"
             value={`${completionRate}%`}
             color="#059669"
             bg="#05966922"
           />
         </div>
-
         <div style={{ gridColumn: '10 / 13', gridRow: '2' }}>
           <StatCard
-            icon={<CheckSquare size={16} />}
+            icon={<CheckSquare size={15} />}
             label="Total done"
             value={`${totalCompletions}`}
             color="#2563eb"
@@ -246,29 +253,29 @@ export default function HabitDetailClient() {
           />
         </div>
 
-        {/* ── ROW 3: Heatmap (col 1-8) + Recent history (col 9-12) ── */}
+        {/* ── ROW 3: Heatmap + Recent + Achievements ── */}
 
         {/* Heatmap */}
         <div
-          className="flex flex-col rounded-2xl border border-stone-100 bg-white p-4 dark:border-stone-800 dark:bg-(--surface-card)"
+          className="flex flex-col rounded-2xl border border-stone-100 bg-white p-3 dark:border-stone-800 dark:bg-(--surface-card)"
           style={{ gridColumn: '1 / 9', gridRow: '3' }}
         >
-          <p className="mb-3 text-xs font-semibold tracking-wide text-(--text-muted) uppercase">
+          <p className="mb-2 shrink-0 text-[11px] font-semibold tracking-wide text-(--text-muted) uppercase">
             Activity — last 8 weeks
           </p>
-          <div className="flex flex-1 gap-1">
-            <div className="mr-1 flex flex-col gap-1">
+          <div className="flex flex-1 gap-0.5">
+            <div
+              className="mr-1 flex flex-col justify-between"
+              style={{ paddingBlock: 1 }}
+            >
               {WEEKDAYS.map((d, i) => (
-                <div
-                  key={i}
-                  className="flex h-4 items-center text-[9px] text-(--text-muted)"
-                >
+                <div key={i} className="text-[8px] text-(--text-muted)">
                   {i % 2 === 1 ? d : ''}
                 </div>
               ))}
             </div>
             {weeks.map((week, wi) => (
-              <div key={wi} className="flex flex-1 flex-col gap-1">
+              <div key={wi} className="flex flex-1 flex-col gap-0.5">
                 {week.map((date, di) => {
                   const cell = getCell(date)
                   const isToday = date === today
@@ -277,7 +284,7 @@ export default function HabitDetailClient() {
                       key={di}
                       whileHover={{ scale: 1.3 }}
                       title={date}
-                      className="h-4 flex-1 rounded-sm"
+                      className="flex-1 rounded-sm"
                       style={{
                         backgroundColor:
                           cell === 'future'
@@ -289,6 +296,7 @@ export default function HabitDetailClient() {
                           ? `1.5px solid ${habit.color}`
                           : 'none',
                         outlineOffset: '1px',
+                        minHeight: 8,
                       }}
                     />
                   )
@@ -296,9 +304,8 @@ export default function HabitDetailClient() {
               </div>
             ))}
           </div>
-          {/* Legend */}
-          <div className="mt-3 flex items-center justify-end gap-1.5">
-            <span className="text-[9px] text-(--text-muted)">Less</span>
+          <div className="mt-1.5 flex shrink-0 items-center justify-end gap-1">
+            <span className="text-[8px] text-(--text-muted)">Less</span>
             {[
               'var(--surface-hover)',
               habit.color + '44',
@@ -307,47 +314,41 @@ export default function HabitDetailClient() {
             ].map((c, i) => (
               <div
                 key={i}
-                className="h-3 w-3 rounded-sm"
+                className="h-2.5 w-2.5 rounded-sm"
                 style={{ backgroundColor: c }}
               />
             ))}
-            <span className="text-[9px] text-(--text-muted)">More</span>
+            <span className="text-[8px] text-(--text-muted)">More</span>
           </div>
         </div>
 
-        {/* Recent history */}
+        {/* Recent + Achievements */}
         <div
-          className="flex flex-col rounded-2xl border border-stone-100 bg-white p-4 dark:border-stone-800 dark:bg-(--surface-card)"
           style={{ gridColumn: '9 / 13', gridRow: '3' }}
+          className="flex flex-col gap-2"
         >
-          <p className="mb-3 text-xs font-semibold tracking-wide text-(--text-muted) uppercase">
-            Recent activity
-          </p>
-          {recentHistory.length === 0 ? (
-            <div className="flex flex-1 items-center justify-center">
-              <p className="text-center text-xs text-(--text-muted)">
-                No activity yet
-              </p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {recentHistory.map((log) => (
-                <div
-                  key={log.id}
-                  className="flex items-center gap-3 rounded-xl bg-(--surface-hover) p-2.5 dark:bg-(--surface-card)"
-                >
+          <div className="flex flex-1 flex-col rounded-2xl border border-stone-100 bg-white p-3 dark:border-stone-800 dark:bg-(--surface-card)">
+            <p className="mb-2 shrink-0 text-[11px] font-semibold tracking-wide text-(--text-muted) uppercase">
+              Recent
+            </p>
+            {recentHistory.length === 0 ? (
+              <p className="text-[10px] text-(--text-muted)">No activity yet</p>
+            ) : (
+              <div className="flex flex-col gap-1">
+                {recentHistory.map((log) => (
                   <div
-                    className={clsx(
-                      'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs',
-                      log.completed
-                        ? 'bg-(--accent-light) text-(--accent)'
-                        : 'bg-red-50 text-red-400'
-                    )}
+                    key={log.id}
+                    className="flex items-center gap-2 rounded-xl bg-(--surface-hover) px-2 py-1"
                   >
-                    {log.completed ? '✓' : '✗'}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium text-(--text-primary)">
+                    <span
+                      className={clsx(
+                        'shrink-0 text-[10px] font-bold',
+                        log.completed ? 'text-emerald-500' : 'text-red-400'
+                      )}
+                    >
+                      {log.completed ? '✓' : '✗'}
+                    </span>
+                    <p className="truncate text-[10px] text-(--text-secondary)">
                       {new Date(log.date + 'T00:00:00').toLocaleDateString(
                         'en-US',
                         {
@@ -357,82 +358,72 @@ export default function HabitDetailClient() {
                         }
                       )}
                     </p>
-                    <p className="text-[10px] text-(--text-muted)">
-                      {log.completed ? 'Completed' : 'Missed'}
-                    </p>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+                ))}
+              </div>
+            )}
+          </div>
 
-        {/* ── ROW 4: Achievements (col 1-8) + Motivation (col 9-12) ── */}
-
-        {/* Achievements */}
-        <div
-          className="rounded-2xl border border-stone-100 bg-white p-4 dark:border-stone-800 dark:bg-(--surface-card)"
-          style={{ gridColumn: '1 / 9', gridRow: '4' }}
-        >
-          <p className="mb-3 text-xs font-semibold tracking-wide text-(--text-muted) uppercase">
-            Achievements
-          </p>
-          {unlockedAchievements.length === 0 ? (
-            <p className="text-xs text-(--text-muted)">
-              Complete habits to unlock achievements
+          <div className="flex flex-1 flex-col rounded-2xl border border-stone-100 bg-white p-3 dark:border-stone-800 dark:bg-(--surface-card)">
+            <p className="mb-2 shrink-0 text-[11px] font-semibold tracking-wide text-(--text-muted) uppercase">
+              Badges
             </p>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {unlockedAchievements.map((a) => (
-                <div
-                  key={a.id}
-                  className="flex items-center gap-2 rounded-xl border border-(--accent)/20 bg-(--accent-light) px-3 py-1.5"
-                  title={a.description}
-                >
-                  <span className="text-base">{a.icon}</span>
-                  <span className="text-xs font-medium text-(--accent)">
-                    {a.title}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
+            {unlockedAchievements.length === 0 ? (
+              <p className="text-[10px] text-(--text-muted)">
+                Complete habits to unlock badges
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {unlockedAchievements.map((a) => (
+                  <div
+                    key={a.id}
+                    title={a.description}
+                    className="flex items-center gap-1 rounded-lg bg-(--accent-light) px-2 py-1"
+                  >
+                    <span className="text-xs">{a.icon}</span>
+                    <span className="text-[10px] font-medium text-(--accent)">
+                      {a.title}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Motivation / progress summary */}
+        {/* ── ROW 4: Motivation banner ── */}
         <div
-          className="flex flex-col justify-between rounded-2xl p-4"
+          className="flex items-center gap-4 rounded-2xl px-4 py-2.5"
           style={{
-            gridColumn: '9 / 13',
+            gridColumn: '1 / 13',
             gridRow: '4',
-            background: `linear-gradient(135deg, ${habit.color}22, ${habit.color}44)`,
-            border: `1px solid ${habit.color}33`,
+            background: `linear-gradient(135deg, ${habit.color}18, ${habit.color}33)`,
+            border: `1px solid ${habit.color}30`,
           }}
         >
-          <div>
-            <div
-              className="mb-2 flex h-8 w-8 items-center justify-center rounded-xl text-white"
-              style={{ backgroundColor: habit.color }}
-            >
-              <Zap size={16} />
-            </div>
-            <p className="mb-1 text-sm font-bold text-(--text-primary)">
+          <div
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-white"
+            style={{ backgroundColor: habit.color }}
+          >
+            <Zap size={14} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-bold text-(--text-primary)">
               {currentStreak > 0
                 ? `${currentStreak} day streak! 🔥`
-                : 'Start your streak!'}
+                : 'Start your streak today!'}
             </p>
-            <p className="text-xs text-(--text-muted)">
+            <p className="text-[10px] text-(--text-muted)">
               {completionRate >= 80
-                ? 'Outstanding consistency! Keep it up.'
+                ? 'Outstanding consistency — keep going!'
                 : completionRate >= 50
                   ? 'Good progress — push for 80%!'
-                  : 'Every day counts. Build the habit.'}
+                  : 'Every completion counts. Build the habit.'}
             </p>
           </div>
-          {/* Mini progress bar */}
-          <div className="mt-3">
-            <div className="mb-1 flex justify-between text-[10px] text-(--text-muted)">
-              <span>Completion rate</span>
+          <div className="w-32 shrink-0">
+            <div className="mb-1 flex justify-between text-[9px] text-(--text-muted)">
+              <span>Completion</span>
               <span>{completionRate}%</span>
             </div>
             <div className="h-1.5 rounded-full bg-white/40">

@@ -30,7 +30,11 @@ export default function SortableHabitCard({ habit, log, streak }: Props) {
   }
 
   return (
-    <div ref={setNodeRef} style={style} className="flex items-center gap-2">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-2 overflow-visible"
+    >
       {/* Drag handle */}
       <button
         {...attributes}

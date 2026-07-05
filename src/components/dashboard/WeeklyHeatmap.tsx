@@ -6,18 +6,14 @@ import { getAllLogs } from '@/lib/db'
 import { useHabitStore } from '@/lib/store'
 import { HabitLog } from '@/types'
 
-function getLast12Weeks(): string[][] {
+function getLast16Weeks(): string[][] {
   const weeks: string[][] = []
   const today = new Date()
   today.setHours(0, 0, 0, 0)
-
-  // Start from 83 days ago (12 weeks) aligned to Sunday
   const start = new Date(today)
-  start.setDate(today.getDate() - 83)
-  // Align to Sunday
+  start.setDate(today.getDate() - 111)
   start.setDate(start.getDate() - start.getDay())
-
-  let current = new Date(start)
+  const current = new Date(start)
   while (current <= today) {
     const week: string[] = []
     for (let d = 0; d < 7; d++) {
@@ -46,12 +42,10 @@ function getMonthLabels(weeks: string[][]): { label: string; col: number }[] {
   return labels
 }
 
-const DAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
-
 export default function WeeklyHeatmap() {
   const { habits } = useHabitStore()
   const [logs, setLogs] = useState<HabitLog[]>([])
-  const weeks = getLast12Weeks()
+  const weeks = getLast16Weeks()
   const monthLabels = getMonthLabels(weeks)
   const today = new Date().toISOString().split('T')[0]
   const activeHabits = habits.filter((h) => !h.isArchived)
@@ -61,14 +55,14 @@ export default function WeeklyHeatmap() {
   }, [])
 
   function getRate(date: string): number {
-    if (date > today) return -1 // future
+    if (date > today) return -1
     if (activeHabits.length === 0) return 0
     const dayLogs = logs.filter((l) => l.date === date && l.completed)
     return dayLogs.length / activeHabits.length
   }
 
   function getCellColor(rate: number): string {
-    if (rate < 0) return 'transparent' // future
+    if (rate < 0) return 'transparent'
     if (rate === 0) return 'var(--surface-hover)'
     if (rate < 0.34) return 'var(--accent)33'
     if (rate < 0.67) return 'var(--accent)77'
@@ -76,26 +70,39 @@ export default function WeeklyHeatmap() {
     return 'var(--accent)'
   }
 
-  function getTooltip(date: string, rate: number): string {
-    if (rate < 0) return ''
-    if (rate === 0) return `${date} — no completions`
-    return `${date} — ${Math.round(rate * 100)}% completed`
-  }
-
   return (
-    <div className="mb-4 rounded-2xl border border-stone-100 bg-white p-4 dark:border-stone-800 dark:bg-(--surface-card)">
-      <h2 className="mb-3 text-sm font-semibold text-(--text-primary)">
-        Activity — last 12 weeks
-      </h2>
+    <div className="flex h-full flex-col rounded-2xl border border-stone-100 bg-white px-3 py-2 dark:border-stone-800 dark:bg-(--surface-card)">
+      <div className="mb-1 flex items-center justify-between">
+        <p className="text-[11px] font-semibold text-(--text-primary)">
+          Activity
+        </p>
+        <div className="flex items-center gap-1">
+          <span className="text-[9px] text-(--text-muted)">Less</span>
+          {[
+            'var(--surface-hover)',
+            'var(--accent)33',
+            'var(--accent)77',
+            'var(--accent)aa',
+            'var(--accent)',
+          ].map((c, i) => (
+            <div
+              key={i}
+              className="h-2 w-2 rounded-sm"
+              style={{ backgroundColor: c }}
+            />
+          ))}
+          <span className="text-[9px] text-(--text-muted)">More</span>
+        </div>
+      </div>
 
       {/* Month labels */}
-      <div className="mb-1 ml-6 flex gap-1">
+      <div className="mb-0.5 ml-4 flex gap-0.5">
         {weeks.map((_, i) => {
           const label = monthLabels.find((m) => m.col === i)
           return (
             <div
               key={i}
-              className="w-3 shrink-0 text-[9px] text-(--text-muted)"
+              className="flex-1 truncate text-[8px] text-(--text-muted)"
             >
               {label?.label ?? ''}
             </div>
@@ -104,22 +111,23 @@ export default function WeeklyHeatmap() {
       </div>
 
       {/* Grid */}
-      <div className="flex gap-1">
+      <div className="flex flex-1 gap-0.5">
         {/* Day labels */}
-        <div className="mr-1 flex flex-col gap-1">
-          {DAYS.map((d, i) => (
+        <div
+          className="mr-0.5 flex flex-col justify-between"
+          style={{ paddingTop: 1, paddingBottom: 1 }}
+        >
+          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
             <div
               key={i}
-              className="flex h-3 w-3 items-center justify-center text-[9px] text-(--text-muted)"
+              className="text-[8px] leading-none text-(--text-muted)"
             >
               {i % 2 === 1 ? d : ''}
             </div>
           ))}
         </div>
-
-        {/* Weeks */}
         {weeks.map((week, wi) => (
-          <div key={wi} className="flex flex-col gap-1">
+          <div key={wi} className="flex flex-1 flex-col gap-0.5">
             {week.map((date, di) => {
               const rate = getRate(date)
               const isToday = date === today
@@ -127,37 +135,19 @@ export default function WeeklyHeatmap() {
                 <motion.div
                   key={di}
                   whileHover={{ scale: 1.4 }}
-                  title={getTooltip(date, rate)}
-                  className="h-3 w-3 cursor-default rounded-sm transition-colors duration-200"
+                  title={`${date} — ${rate < 0 ? 'future' : rate === 0 ? 'no activity' : Math.round(rate * 100) + '%'}`}
+                  className="flex-1 rounded-sm"
                   style={{
                     backgroundColor: getCellColor(rate),
                     outline: isToday ? '1.5px solid var(--accent)' : 'none',
                     outlineOffset: '1px',
+                    minHeight: 8,
                   }}
                 />
               )
             })}
           </div>
         ))}
-      </div>
-
-      {/* Legend */}
-      <div className="mt-3 flex items-center justify-end gap-1.5">
-        <span className="text-[10px] text-(--text-muted)">Less</span>
-        {[
-          'var(--surface-hover)',
-          'var(--accent)33',
-          'var(--accent)77',
-          'var(--accent)aa',
-          'var(--accent)',
-        ].map((c, i) => (
-          <div
-            key={i}
-            className="h-3 w-3 rounded-sm"
-            style={{ backgroundColor: c }}
-          />
-        ))}
-        <span className="text-[10px] text-(--text-muted)">More</span>
       </div>
     </div>
   )

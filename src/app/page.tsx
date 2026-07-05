@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Plus } from 'lucide-react'
+import { Plus, Flame, Zap, CheckSquare } from 'lucide-react'
 import {
   DndContext,
   closestCenter,
@@ -26,7 +26,6 @@ import AchievementToast from '@/components/dashboard/AchievementToast'
 import WeatherWidget from '@/components/dashboard/WeatherWidget'
 import SuggestedHabits from '@/components/dashboard/SuggestedHabits'
 import MiniAnalytics from '@/components/dashboard/MiniAnalytics'
-import QuickStats from '@/components/dashboard/QuickStats'
 import MiniCalendar from '@/components/dashboard/MiniCalendar'
 import { Achievement } from '@/lib/store/gamificationStore'
 
@@ -50,7 +49,8 @@ export default function DashboardPage() {
   const { habits, todayLogs, loadHabits, loadTodayLogs, reorderHabits } =
     useHabitStore()
   const { openCreateHabit } = useUIStore()
-  const { achievements } = useGamificationStore()
+  const { achievements, markToastShown, level, totalXP } =
+    useGamificationStore()
   const streaks = useStreaks()
   const today = todayISO()
   const [toastAchievement, setToastAchievement] = useState<Achievement | null>(
@@ -63,13 +63,14 @@ export default function DashboardPage() {
   }, [loadHabits, loadTodayLogs])
 
   useEffect(() => {
-    const latest = achievements
-      .filter((a) => a.unlockedAt)
-      .sort((a, b) => (b.unlockedAt! > a.unlockedAt! ? 1 : -1))[0]
-    if (!latest) return
-    const timer = setTimeout(() => setToastAchievement(latest), 0)
+    const unshown = achievements.find((a) => a.unlockedAt && !a.toastShown)
+    if (!unshown) return
+    const timer = setTimeout(() => {
+      setToastAchievement(unshown)
+      markToastShown(unshown.id)
+    }, 0)
     return () => clearTimeout(timer)
-  }, [achievements])
+  }, [achievements, markToastShown])
 
   const activeHabits = useMemo(
     () => habits.filter((h) => !h.isArchived),
@@ -84,6 +85,13 @@ export default function DashboardPage() {
     [todayLogs, activeHabits]
   )
 
+  const pct =
+    activeHabits.length === 0
+      ? 0
+      : Math.round((completedCount / activeHabits.length) * 100)
+
+  const remaining = activeHabits.length - completedCount
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   )
@@ -96,67 +104,118 @@ export default function DashboardPage() {
     reorderHabits(arrayMove(activeHabits, oldIndex, newIndex))
   }
 
-  const remaining = activeHabits.length - completedCount
-  const pct =
-    activeHabits.length === 0
-      ? 0
-      : Math.round((completedCount / activeHabits.length) * 100)
-
   return (
-    <div className="h-screen overflow-hidden p-4">
-      {/*
-        12-column grid, 6 rows
-        Each card specifies exactly which columns and rows it occupies
-      */}
+    <div
+      style={{
+        height: '100vh',
+        overflow: 'hidden',
+        padding: '12px',
+        boxSizing: 'border-box',
+        display: 'flex',
+        gap: '10px',
+      }}
+    >
+      {/* ══ LEFT COLUMN ══ */}
       <div
-        className="h-full gap-3"
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(12, 1fr)',
-          gridTemplateRows: 'auto auto auto auto 1fr auto',
+          width: '220px',
+          flexShrink: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          overflow: 'hidden',
         }}
       >
-        {/* ── ROW 1: Greeting (col 1-5) + Quick stats (col 6-8) + Analytics (col 9-12) ── */}
-
         {/* Greeting */}
-        <div
-          className="flex flex-col justify-center"
-          style={{ gridColumn: '1 / 5', gridRow: '1' }}
-        >
-          <h1 className="text-xl font-bold text-(--text-primary)">
+        <div className="shrink-0">
+          <h1 className="text-base leading-tight font-bold text-(--text-primary)">
             {getGreeting()}
           </h1>
-          <p className="mt-0.5 text-xs text-(--text-muted)">{getDate()}</p>
+          <p className="mt-0.5 text-[10px] text-(--text-muted)">{getDate()}</p>
         </div>
 
-        {/* Progress ring + summary */}
-        <div
-          className="flex items-center gap-3 rounded-2xl border border-stone-100 bg-white p-3 dark:border-stone-800 dark:bg-(--surface-card)"
-          style={{ gridColumn: '5 / 9', gridRow: '1' }}
+        {/* New Habit button */}
+        <motion.button
+          onClick={openCreateHabit}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="flex w-full shrink-0 items-center justify-center gap-1.5 rounded-xl bg-(--accent) py-2 text-xs font-medium text-white hover:opacity-90"
         >
-          {/* Ring */}
-          <div className="relative h-12 w-12 shrink-0">
-            <svg className="h-full w-full -rotate-90" viewBox="0 0 48 48">
+          <Plus size={12} /> New Habit
+        </motion.button>
+
+        {/* Quick stats */}
+        <div className="grid shrink-0 grid-cols-3 gap-1.5">
+          <div className="rounded-xl border border-stone-100 bg-white p-2 text-center dark:border-stone-800 dark:bg-(--surface-card)">
+            <CheckSquare size={10} className="mx-auto mb-0.5 text-(--accent)" />
+            <p className="text-xs font-bold text-(--accent)">{pct}%</p>
+            <p className="text-[9px] text-(--text-muted)">Today</p>
+          </div>
+          <div className="rounded-xl border border-stone-100 bg-white p-2 text-center dark:border-stone-800 dark:bg-(--surface-card)">
+            <Flame size={10} className="mx-auto mb-0.5 text-orange-500" />
+            <p className="text-xs font-bold text-orange-500">
+              {activeHabits.length}
+            </p>
+            <p className="text-[9px] text-(--text-muted)">Habits</p>
+          </div>
+          <div className="rounded-xl border border-stone-100 bg-white p-2 text-center dark:border-stone-800 dark:bg-(--surface-card)">
+            <Zap size={10} className="mx-auto mb-0.5 text-violet-500" />
+            <p className="text-xs font-bold text-violet-500">Lv{level}</p>
+            <p className="text-[9px] text-(--text-muted)">{totalXP}xp</p>
+          </div>
+        </div>
+
+        {/* Weather */}
+        <div className="shrink-0">
+          <WeatherWidget />
+        </div>
+
+        {/* XP bar */}
+        <div className="shrink-0">
+          <XPBar />
+        </div>
+
+        {/* Analytics — fills remaining space */}
+        <div className="min-h-0 flex-1 overflow-hidden">
+          <MiniAnalytics />
+        </div>
+      </div>
+
+      {/* ══ CENTER COLUMN — Today's Habits ══ */}
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          overflow: 'hidden',
+          minWidth: 0,
+        }}
+      >
+        {/* Progress header */}
+        <div className="flex shrink-0 items-center gap-3 rounded-2xl border border-stone-100 bg-white px-4 py-2.5 dark:border-stone-800 dark:bg-(--surface-card)">
+          <div className="relative shrink-0" style={{ width: 44, height: 44 }}>
+            <svg width="44" height="44" className="-rotate-90">
               <circle
-                cx="24"
-                cy="24"
-                r="18"
+                cx="22"
+                cy="22"
+                r="16"
                 fill="none"
                 stroke="var(--surface-hover)"
-                strokeWidth="5"
+                strokeWidth="4"
               />
               <motion.circle
-                cx="24"
-                cy="24"
-                r="18"
+                cx="22"
+                cy="22"
+                r="16"
                 fill="none"
                 stroke="var(--accent)"
-                strokeWidth="5"
+                strokeWidth="4"
                 strokeLinecap="round"
-                strokeDasharray={2 * Math.PI * 18}
-                initial={{ strokeDashoffset: 2 * Math.PI * 18 }}
+                strokeDasharray={2 * Math.PI * 16}
+                initial={{ strokeDashoffset: 2 * Math.PI * 16 }}
                 animate={{
-                  strokeDashoffset: 2 * Math.PI * 18 * (1 - pct / 100),
+                  strokeDashoffset: 2 * Math.PI * 16 * (1 - pct / 100),
                 }}
                 transition={{ duration: 0.8, ease: 'easeOut' }}
               />
@@ -165,139 +224,121 @@ export default function DashboardPage() {
               {pct}%
             </span>
           </div>
-          <div>
+          <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-(--text-primary)">
-              {completedCount} / {activeHabits.length} done
+              {"Today's Habits"}
             </p>
             <p className="text-xs text-(--text-muted)">
-              {remaining === 0 ? 'All complete! 🎉' : `${remaining} left today`}
+              {completedCount}/{activeHabits.length} done
+              {remaining > 0
+                ? ` · ${remaining} remaining`
+                : ' · All complete! 🎉'}
             </p>
           </div>
         </div>
 
-        {/* Mini analytics — header row */}
-        <div style={{ gridColumn: '9 / 13', gridRow: '1' }}>
-          <MiniAnalytics />
-        </div>
+        {/* Habits card — fills all remaining space */}
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-stone-100 bg-white dark:border-stone-800 dark:bg-(--surface-card)">
+          {/* Fixed sub-header */}
+          <div className="flex shrink-0 items-center justify-between border-b border-stone-100 px-4 py-2 dark:border-stone-800">
+            <p className="text-[10px] font-semibold tracking-wide text-(--text-muted) uppercase">
+              Habit list
+            </p>
+            <p className="text-[10px] text-(--text-muted)">Drag to reorder</p>
+          </div>
 
-        {/* ── ROW 2: New Habit btn + XP bar + Weather + Calendar header ── */}
-
-        {/* New habit + XP */}
-        <div
-          className="flex flex-col gap-2"
-          style={{ gridColumn: '1 / 5', gridRow: '2' }}
-        >
-          <motion.button
-            onClick={openCreateHabit}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-(--accent) py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
-          >
-            <Plus size={14} /> New Habit
-          </motion.button>
-          <XPBar />
-        </div>
-
-        {/* Weather */}
-        <div style={{ gridColumn: '5 / 9', gridRow: '2' }}>
-          <WeatherWidget />
-        </div>
-
-        {/* Quick stats */}
-        <div style={{ gridColumn: '9 / 13', gridRow: '2' }}>
-          <QuickStats
-            completedToday={completedCount}
-            totalToday={activeHabits.length}
-          />
-        </div>
-
-        {/* ── ROW 3-5: Habits list (col 1-8) + right widgets (col 9-12) ── */}
-
-        {/* Today's habits — spans rows 3,4,5 */}
-        <div
-          className="scrollbar-hide flex flex-col gap-2 overflow-y-auto"
-          style={{ gridColumn: '1 / 9', gridRow: '3 / 6' }}
-        >
-          <p className="shrink-0 text-xs font-semibold tracking-wide text-(--text-muted) uppercase">
-            {"Today's Habits"}
-          </p>
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={activeHabits.map((h) => h.id)}
-              strategy={verticalListSortingStrategy}
+          {/* Scrollable list */}
+          <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto p-3">
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
             >
-              <div className="space-y-2">
-                {activeHabits.length === 0 ? (
-                  <div className="py-12 text-center text-(--text-muted)">
-                    <p className="mb-2 text-3xl">✨</p>
-                    <p className="text-sm font-medium">No habits yet</p>
-                    <p className="mt-1 text-xs">
-                      Click New Habit to get started
-                    </p>
-                  </div>
-                ) : (
-                  activeHabits.map((habit) => {
-                    const log = todayLogs.find(
-                      (l) => l.habitId === habit.id && l.date === today
-                    )
-                    return (
-                      <SortableHabitCard
-                        key={habit.id}
-                        habit={habit}
-                        log={log}
-                        streak={streaks[habit.id] ?? 0}
-                      />
-                    )
-                  })
-                )}
-              </div>
-            </SortableContext>
-          </DndContext>
+              <SortableContext
+                items={activeHabits.map((h) => h.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="flex flex-col gap-2">
+                  {activeHabits.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-(--text-muted)">
+                      <p className="mb-2 text-3xl">✨</p>
+                      <p className="text-sm font-medium">No habits yet</p>
+                      <p className="mt-1 text-xs">
+                        Click New Habit to get started
+                      </p>
+                    </div>
+                  ) : (
+                    activeHabits.map((habit) => {
+                      const log = todayLogs.find(
+                        (l) => l.habitId === habit.id && l.date === today
+                      )
+                      return (
+                        <SortableHabitCard
+                          key={habit.id}
+                          habit={habit}
+                          log={log}
+                          streak={streaks[habit.id] ?? 0}
+                        />
+                      )
+                    })
+                  )}
+                </div>
+              </SortableContext>
+            </DndContext>
+          </div>
         </div>
 
-        {/* Heatmap — col 9-12 row 3 */}
-        <div style={{ gridColumn: '9 / 13', gridRow: '3' }}>
-          <WeeklyHeatmap />
-        </div>
-
-        {/* Mini calendar — col 9-12 row 4 */}
-        <div style={{ gridColumn: '9 / 13', gridRow: '4' }}>
-          <MiniCalendar />
-        </div>
-
-        {/* Should try — col 9-12 row 5 */}
-        <div style={{ gridColumn: '9 / 13', gridRow: '5' }}>
-          <SuggestedHabits />
-        </div>
-
-        {/* ── ROW 6: Motivation banner (col 1-8) + nothing right ── */}
-
-        {/* Motivation */}
+        {/* Motivation banner */}
         <div
-          className="flex items-center gap-3 rounded-2xl bg-(--accent-light) p-3"
-          style={{ gridColumn: '1 / 9', gridRow: '6' }}
+          className="flex shrink-0 items-center gap-3 rounded-2xl px-4 py-2.5"
+          style={{
+            background:
+              'linear-gradient(135deg, var(--accent), var(--accent-light))',
+          }}
         >
-          <span className="text-2xl">🌟</span>
-          <div>
-            <p className="text-sm font-semibold text-(--accent)">
+          <span className="shrink-0 text-base">🌟</span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs font-bold text-white">
               {completedCount === activeHabits.length && activeHabits.length > 0
                 ? 'All done! You crushed it today 🎉'
                 : 'Keep it up!'}
             </p>
-            <p className="text-xs text-(--accent) opacity-70">
-              {remaining === 0
-                ? 'Take a moment to celebrate your consistency'
-                : `${remaining} habit${remaining > 1 ? 's' : ''} remaining — you can do it!`}
+            <p className="truncate text-[10px] text-white/80">
+              {remaining > 0
+                ? `${remaining} habit${remaining > 1 ? 's' : ''} remaining — you can do it!`
+                : activeHabits.length > 0
+                  ? 'Take a moment to celebrate your consistency'
+                  : 'Create your first habit to get started'}
             </p>
           </div>
         </div>
+      </div>
 
-        {/* Empty right bottom */}
-        <div style={{ gridColumn: '9 / 13', gridRow: '6' }} />
+      {/* ══ RIGHT COLUMN ══ */}
+      <div
+        style={{
+          width: '240px',
+          flexShrink: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Calendar */}
+        <div className="shrink-0">
+          <MiniCalendar />
+        </div>
+
+        {/* Heatmap — fills remaining space */}
+        <div className="min-h-0 flex-1">
+          <WeeklyHeatmap />
+        </div>
+
+        {/* Suggested habits */}
+        <div className="shrink-0">
+          <SuggestedHabits />
+        </div>
       </div>
 
       <AchievementToast
