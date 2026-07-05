@@ -5,6 +5,7 @@ import Sidebar from '@/components/ui/Sidebar'
 import HabitModal from '@/components/habits/HabitModal'
 import ThemeInitializer from '@/components/ui/ThemeInitializer'
 import KawaiiBackground from '@/components/ui/KawaiiBackground'
+import VirtualPet from '@/components/pet/VirtualPet'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -23,22 +24,16 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <Providers>
-          {/* Restores saved theme from localStorage on every load */}
           <ThemeInitializer />
-
-          {/* Floating kawaii shapes in the background */}
           <KawaiiBackground />
-
-          {/* Main app layout sits above the background */}
           <div className="relative z-10 flex h-screen overflow-hidden">
             <Sidebar />
             <main className="flex-1 overflow-y-auto bg-(--surface-bg)/80 backdrop-blur-sm transition-colors duration-300">
               {children}
             </main>
           </div>
-
-          {/* Modal overlays everything */}
           <HabitModal />
+          <VirtualPet />
         </Providers>
       </body>
     </html>
