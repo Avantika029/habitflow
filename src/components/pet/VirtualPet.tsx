@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useGamificationStore } from '@/lib/store'
 
@@ -71,103 +71,166 @@ function getAccessory(level: number): string {
 
 const PET_COLORS = ['#f9b2d7', '#daf9de', '#cfecf3', '#f6ffdc', '#ede9fe']
 
+const STORAGE_KEY = 'habitflow-pet-position'
+
+function loadPosition(): { x: number; y: number } {
+  if (typeof window === 'undefined') return { x: 0, y: 0 }
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved) return JSON.parse(saved)
+  } catch {}
+  return { x: 0, y: 0 }
+}
+
+function savePosition(pos: { x: number; y: number }) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(pos))
+  } catch {}
+}
+
+// This component is only ever mounted via next/dynamic with ssr:false
+// (see the barrel file), so it never runs during SSR — it's safe to read
+// localStorage / call Math.random() directly in useState's lazy
+// initializer, no mount-detection effect needed anywhere in this file.
 export default function VirtualPet() {
   const { level, totalXP } = useGamificationStore()
 
-  // All random state starts deterministic — set randomly only after mount
-  const [mounted, setMounted] = useState(false)
-  const [petColor, setPetColor] = useState(PET_COLORS[0])
-  const [mood, setMood] = useState<PetMood>('idle')
+  const [petColor] = useState(
+    () => PET_COLORS[Math.floor(Math.random() * PET_COLORS.length)]
+  )
+  const [position, setPosition] = useState(() => loadPosition())
+  const [mood, setMood] = useState<PetMood>(() => {
+    const hour = new Date().getHours()
+    return hour >= 22 || hour < 6 ? 'sleepy' : 'idle'
+  })
+
   const [message, setMessage] = useState<string | null>(null)
   const [showMessage, setShowMessage] = useState(false)
-  const [isAnimating, setIsAnimating] = useState(false)
   const [blinking, setBlinking] = useState(false)
   const [bouncing, setBouncing] = useState(false)
   const [treats, setTreats] = useState(0)
-  const [prevXP, setPrevXP] = useState(0)
-  const [prevLevel, setPrevLevel] = useState(1)
-  const messageTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
 
-  // Mount — set random color and sync XP/level baseline
-  useEffect(() => {
-    setPetColor(PET_COLORS[Math.floor(Math.random() * PET_COLORS.length)])
-    setPrevXP(totalXP)
-    setPrevLevel(level)
-    setMounted(true)
+  const prevXPRef = useRef(totalXP)
+  const prevLevelRef = useRef(level)
+
+  const messageTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const dragStartPos = useRef({ x: 0, y: 0 })
+  const dragStartOffset = useRef({ x: 0, y: 0 })
+
+  const showSpeechBubble = useCallback((m: PetMood) => {
+    if (messageTimer.current) clearTimeout(messageTimer.current)
+    setMessage(getRandomMessage(m))
+    setShowMessage(true)
+    messageTimer.current = setTimeout(() => setShowMessage(false), 4000)
   }, [])
 
-  // Detect XP gain
+  const triggerMood = useCallback(
+    (newMood: PetMood) => {
+      setMood(newMood)
+      showSpeechBubble(newMood)
+      setTimeout(() => {
+        setMood('happy')
+        setTimeout(() => setMood('idle'), 5000)
+      }, 3000)
+    },
+    [showSpeechBubble]
+  )
+
   useEffect(() => {
-    if (!mounted) return
-    if (totalXP > prevXP) {
+    if (totalXP > prevXPRef.current) {
       setTreats((t) => t + 1)
       triggerMood('excited')
     }
-    setPrevXP(totalXP)
-  }, [totalXP, mounted])
+    prevXPRef.current = totalXP
+  }, [totalXP, triggerMood])
 
-  // Detect level up
   useEffect(() => {
-    if (!mounted) return
-    if (level > prevLevel) triggerMood('celebrating')
-    setPrevLevel(level)
-  }, [level, mounted])
+    if (level > prevLevelRef.current) triggerMood('celebrating')
+    prevLevelRef.current = level
+  }, [level, triggerMood])
 
-  // Blink every 3-4 seconds
   useEffect(() => {
-    if (!mounted) return
     const interval = setInterval(() => {
       setBlinking(true)
       setTimeout(() => setBlinking(false), 200)
     }, 3500)
     return () => clearInterval(interval)
-  }, [mounted])
+  }, [])
 
-  // Random bounce
   useEffect(() => {
-    if (!mounted) return
     const interval = setInterval(() => {
       setBouncing(true)
       setTimeout(() => setBouncing(false), 600)
     }, 9000)
     return () => clearInterval(interval)
-  }, [mounted])
+  }, [])
 
-  // Sleepy at night
   useEffect(() => {
-    if (!mounted) return
-    const h = new Date().getHours()
-    if (h >= 22 || h < 6) setMood('sleepy')
-  }, [mounted])
-
-  // Auto idle message
-  useEffect(() => {
-    if (!mounted) return
     const interval = setInterval(() => {
       if (mood === 'idle') showSpeechBubble('idle')
     }, 30000)
     return () => clearInterval(interval)
-  }, [mood, mounted])
+  }, [mood, showSpeechBubble])
 
-  function triggerMood(newMood: PetMood) {
-    setMood(newMood)
-    setIsAnimating(true)
-    showSpeechBubble(newMood)
-    setTimeout(() => {
-      setIsAnimating(false)
-      setMood('happy')
-      setTimeout(() => setMood('idle'), 5000)
-    }, 3000)
+  function handleMouseDown(e: React.MouseEvent) {
+    e.preventDefault()
+    setIsDragging(true)
+    dragStartPos.current = { x: e.clientX, y: e.clientY }
+    dragStartOffset.current = { ...position }
   }
 
-  function showSpeechBubble(m: PetMood) {
-    if (messageTimer.current) clearTimeout(messageTimer.current)
-    setMessage(getRandomMessage(m))
-    setShowMessage(true)
-    messageTimer.current = setTimeout(() => setShowMessage(false), 4000)
+  function handleTouchStart(e: React.TouchEvent) {
+    const touch = e.touches[0]
+    setIsDragging(true)
+    dragStartPos.current = { x: touch.clientX, y: touch.clientY }
+    dragStartOffset.current = { ...position }
   }
 
-  function handlePetClick() {
+  useEffect(() => {
+    if (!isDragging) return
+
+    function onMouseMove(e: MouseEvent) {
+      const dx = e.clientX - dragStartPos.current.x
+      const dy = e.clientY - dragStartPos.current.y
+      const newPos = {
+        x: dragStartOffset.current.x - dx,
+        y: dragStartOffset.current.y - dy,
+      }
+      setPosition(newPos)
+    }
+
+    function onTouchMove(e: TouchEvent) {
+      const touch = e.touches[0]
+      const dx = touch.clientX - dragStartPos.current.x
+      const dy = touch.clientY - dragStartPos.current.y
+      const newPos = {
+        x: dragStartOffset.current.x - dx,
+        y: dragStartOffset.current.y - dy,
+      }
+      setPosition(newPos)
+    }
+
+    function onEnd() {
+      setIsDragging(false)
+      savePosition(position)
+    }
+
+    window.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('mouseup', onEnd)
+    window.addEventListener('touchmove', onTouchMove)
+    window.addEventListener('touchend', onEnd)
+
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove)
+      window.removeEventListener('mouseup', onEnd)
+      window.removeEventListener('touchmove', onTouchMove)
+      window.removeEventListener('touchend', onEnd)
+    }
+  }, [isDragging, position])
+
+  function handleClick() {
+    if (isDragging) return
     if (treats > 0) {
       setTreats((t) => t - 1)
       triggerMood('happy')
@@ -186,17 +249,18 @@ export default function VirtualPet() {
     }
   }
 
-  // Don't render anything on server
-  if (!mounted) return null
-
   const accessory = getAccessory(level)
 
   return (
     <div
-      className="fixed right-6 bottom-6 z-30 flex flex-col items-end gap-2"
-      style={{ pointerEvents: 'none' }}
+      className="fixed z-30 flex flex-col items-end gap-2"
+      style={{
+        bottom: `${Math.max(16, position.y + 24)}px`,
+        right: `${Math.max(16, position.x + 24)}px`,
+        pointerEvents: 'none',
+        userSelect: 'none',
+      }}
     >
-      {/* Speech bubble */}
       <AnimatePresence>
         {showMessage && message && (
           <motion.div
@@ -222,7 +286,6 @@ export default function VirtualPet() {
         )}
       </AnimatePresence>
 
-      {/* Treats counter */}
       <AnimatePresence>
         {treats > 0 && (
           <motion.button
@@ -241,52 +304,65 @@ export default function VirtualPet() {
         )}
       </AnimatePresence>
 
-      {/* Pet */}
       <motion.div
-        onClick={handlePetClick}
+        onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
+        onClick={handleClick}
         animate={
-          mood === 'celebrating'
-            ? {
-                rotate: [0, -10, 10, -10, 10, 0],
-                scale: [1, 1.15, 1.15, 1.15, 1.15, 1],
-              }
-            : mood === 'excited'
-              ? { y: [0, -10, 0, -10, 0], scale: [1, 1.08, 1, 1.08, 1] }
-              : bouncing
-                ? { y: [0, -8, 0] }
-                : { y: [0, -4, 0] }
+          isDragging
+            ? { scale: 1.1, rotate: 0 }
+            : mood === 'celebrating'
+              ? {
+                  rotate: [0, -10, 10, -10, 10, 0],
+                  scale: [1, 1.15, 1.15, 1.15, 1.15, 1],
+                }
+              : mood === 'excited'
+                ? { y: [0, -10, 0, -10, 0], scale: [1, 1.08, 1, 1.08, 1] }
+                : bouncing
+                  ? { y: [0, -8, 0] }
+                  : { y: [0, -4, 0] }
         }
         transition={
-          mood === 'celebrating' || mood === 'excited'
-            ? { duration: 0.5, repeat: 2 }
-            : bouncing
-              ? { duration: 0.4 }
-              : { duration: 3, repeat: Infinity, ease: 'easeInOut' }
+          isDragging
+            ? { duration: 0.1 }
+            : mood === 'celebrating' || mood === 'excited'
+              ? { duration: 0.5, repeat: 2 }
+              : bouncing
+                ? { duration: 0.4 }
+                : { duration: 3, repeat: Infinity, ease: 'easeInOut' }
         }
-        className="relative cursor-pointer select-none"
+        className="relative select-none"
         style={{
           pointerEvents: 'auto',
-          filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.12))',
+          cursor: isDragging ? 'grabbing' : 'grab',
+          filter: isDragging
+            ? 'drop-shadow(0 8px 24px rgba(0,0,0,0.2))'
+            : 'drop-shadow(0 4px 16px rgba(0,0,0,0.12))',
         }}
       >
-        {/* Accessory */}
+        {!isDragging && (
+          <div className="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 rounded-md bg-black/50 px-1.5 py-0.5 text-[8px] whitespace-nowrap text-white opacity-0 transition-opacity hover:opacity-100">
+            drag me!
+          </div>
+        )}
+
         {accessory && (
           <div className="absolute -top-6 left-1/2 z-10 -translate-x-1/2 text-xl select-none">
             {accessory}
           </div>
         )}
 
-        {/* Body */}
         <div
           className="relative flex flex-col items-center justify-center rounded-full"
           style={{
             width: 70,
             height: 70,
             backgroundColor: petColor,
-            boxShadow: `0 0 0 3px white, 0 4px 20px ${petColor}88`,
+            boxShadow: isDragging
+              ? `0 0 0 3px white, 0 8px 32px ${petColor}cc`
+              : `0 0 0 3px white, 0 4px 20px ${petColor}88`,
           }}
         >
-          {/* Ears */}
           <div
             className="absolute -top-3 left-2.5 h-5 w-5 rounded-full"
             style={{ backgroundColor: petColor, boxShadow: '0 0 0 2px white' }}
@@ -298,7 +374,6 @@ export default function VirtualPet() {
           <div className="absolute -top-2 left-3.5 h-2.5 w-2.5 rounded-full bg-pink-200" />
           <div className="absolute -top-2 right-3.5 h-2.5 w-2.5 rounded-full bg-pink-200" />
 
-          {/* Eyes */}
           <div className="mb-0.5 flex gap-3">
             <motion.div
               animate={blinking ? { scaleY: 0.1 } : { scaleY: 1 }}
@@ -314,28 +389,26 @@ export default function VirtualPet() {
             />
           </div>
 
-          {/* Nose */}
           <div className="mb-0.5 h-0.5 w-1 rounded-full bg-pink-400" />
 
-          {/* Mouth */}
           <div
             className="text-[8px] leading-none font-bold"
             style={{ color: '#5a3e36' }}
           >
-            {mood === 'sleepy'
-              ? '~_~'
-              : mood === 'hungry'
-                ? '>o<'
-                : mood === 'excited' || mood === 'celebrating'
-                  ? 'owo'
-                  : 'uwu'}
+            {isDragging
+              ? 'o_o'
+              : mood === 'sleepy'
+                ? '~_~'
+                : mood === 'hungry'
+                  ? '>o<'
+                  : mood === 'excited' || mood === 'celebrating'
+                    ? 'owo'
+                    : 'uwu'}
           </div>
 
-          {/* Cheeks */}
           <div className="absolute bottom-4 left-1 h-2 w-3.5 rounded-full bg-pink-300 opacity-40" />
           <div className="absolute right-1 bottom-4 h-2 w-3.5 rounded-full bg-pink-300 opacity-40" />
 
-          {/* Sparkles */}
           <AnimatePresence>
             {(mood === 'excited' || mood === 'celebrating') && (
               <>
@@ -361,7 +434,6 @@ export default function VirtualPet() {
           </AnimatePresence>
         </div>
 
-        {/* Level badge */}
         <div
           className="absolute -right-1 -bottom-1 flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold text-white"
           style={{ backgroundColor: 'var(--accent)' }}
@@ -370,7 +442,6 @@ export default function VirtualPet() {
         </div>
       </motion.div>
 
-      {/* Mood pill */}
       <div
         className="flex items-center gap-1 rounded-full border border-stone-100 bg-white/80 px-2 py-0.5 shadow-sm backdrop-blur-sm dark:border-stone-700 dark:bg-(--surface-card)/80"
         style={{ pointerEvents: 'none' }}
