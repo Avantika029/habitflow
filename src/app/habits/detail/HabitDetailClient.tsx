@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useEffect, useState, useMemo, Suspense } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
   ArrowLeft,
@@ -72,8 +72,8 @@ function StatCard({ icon, label, value, color, bg }: StatCardProps) {
   )
 }
 
-export default function HabitDetailClient() {
-  const params = useParams()
+function HabitDetailInner() {
+  const searchParams = useSearchParams()
   const router = useRouter()
   const { habits, todayLogs, toggleHabit, loadHabits, loadTodayLogs } =
     useHabitStore()
@@ -82,7 +82,7 @@ export default function HabitDetailClient() {
   const [logs, setLogs] = useState<HabitLog[]>([])
   const today = todayISO()
 
-  const habitId = params.id as string
+  const habitId = searchParams.get('id') ?? ''
   const habit = habits.find((h) => h.id === habitId)
 
   useEffect(() => {
@@ -439,5 +439,13 @@ export default function HabitDetailClient() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function HabitDetailClient() {
+  return (
+    <Suspense fallback={null}>
+      <HabitDetailInner />
+    </Suspense>
   )
 }

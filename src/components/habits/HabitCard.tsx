@@ -85,7 +85,7 @@ export default function HabitCard({ habit, log, streak }: HabitCardProps) {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25, ease: 'easeOut' }}
-        onClick={() => router.push(`/habits/${habit.id}`)}
+        onClick={() => router.push(`/habits/detail?id=${habit.id}`)}
         className={clsx(
           'relative flex cursor-pointer items-center gap-3 rounded-2xl border p-3',
           'bg-white transition-all duration-200 dark:bg-(--surface-card)',
