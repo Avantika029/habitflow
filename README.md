@@ -1,36 +1,110 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🌱 HabitFlow
 
-## Getting Started
+A full-stack habit tracker with streaks, XP, achievements, and a virtual pet that celebrates your progress with you.
 
-First, run the development server:
+**🔗 Live demo:** [avantika029.github.io/habitflow](https://avantika029.github.io/habitflow/)
+
+![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-38bdf8?logo=tailwindcss)
+![Zustand](https://img.shields.io/badge/State-Zustand-orange)
+![License](https://img.shields.io/badge/license-MIT-green)
+
+<!-- 📸 Add a screenshot or short GIF of the dashboard here once you have one:
+![HabitFlow dashboard](./docs/screenshot.png)
+-->
+
+## ✨ Features
+
+**Habit tracking**
+- Full CRUD for habits — emoji icon, colour, category, difficulty, and custom frequency
+- One-tap complete/incomplete toggle, with confetti on completion
+- Drag-and-drop reordering
+- Current streak + longest streak calculation
+
+**Gamification**
+- XP system — earn XP on completion, lose it on uncheck
+- Level system with XP thresholds
+- 9 achievements, each with a one-time toast (never repeats after refresh)
+- A draggable virtual pet with moods, blinking, speech bubbles, and accessories that unlock as you level up
+
+**Insight & visualization**
+- 12-week weekly heatmap
+- Mini calendar and full calendar view
+- Analytics page with completion %, streaks, and trends (Recharts)
+- Per-habit detail page with stats, heatmap, and recent history
+
+**Design**
+- Two custom themes — 🌸 **Bloom** (soft pastels) and 🍂 **Forge** (warm earth tones) — plus light/dark mode
+- Kawaii floating background, theme-aware
+- Fully responsive 3-column dashboard that fits `100vh` with no scrollbars
+- Weather widget (Open-Meteo) and an auto-refreshing "cute pictures" widget (Picsum), both geolocation/randomization-aware and hydration-safe
+
+**Data**
+- 100% client-side — all data lives in **IndexedDB**, nothing leaves your browser
+- Export all data as JSON
+- Clear-all-data option in Settings
+
+## 🛠 Tech stack
+
+| Layer | Choice |
+|---|---|
+| Framework | [Next.js 16](https://nextjs.org/) (App Router, Turbopack) |
+| Language | TypeScript |
+| Styling | Tailwind CSS v4 (CSS-variable-based theming, no config file) |
+| State | [Zustand](https://github.com/pmndrs/zustand) |
+| Storage | IndexedDB via [`idb`](https://github.com/jakearchibald/idb) |
+| Animation | [Framer Motion](https://www.framer.com/motion/) |
+| Drag & drop | [@dnd-kit](https://dndkit.com/) |
+| Charts | [Recharts](https://recharts.org/) |
+| Celebration | [canvas-confetti](https://github.com/catdad/canvas-confetti) |
+| Hosting | GitHub Pages (static export) via GitHub Actions |
+
+## 🚀 Getting started
 
 ```bash
+git clone https://github.com/avantika029/habitflow.git
+cd habitflow
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) — all data is stored locally in your browser via IndexedDB, so there's no database or backend to set up.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Build for production
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+```
 
-## Learn More
+This generates a fully static export in `/out`, matching what's deployed to GitHub Pages.
 
-To learn more about Next.js, take a look at the following resources:
+## 📁 Project structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+src/
+├── app/                  # Routes (App Router)
+│   ├── page.tsx          # Dashboard
+│   ├── habits/           # My Habits + habit detail (query-param based)
+│   ├── calendar/
+│   ├── analytics/
+│   └── settings/
+├── components/           # UI components, grouped by feature
+├── lib/
+│   ├── store/            # Zustand stores (habit, ui, theme, gamification)
+│   ├── db/               # IndexedDB wrapper (idb)
+│   └── utils/            # Streak/XP/date helpers
+└── types/                # Shared TypeScript types
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🌐 Deployment
 
-## Deploy on Vercel
+HabitFlow deploys automatically to GitHub Pages on every push to `main` via GitHub Actions (`.github/workflows/deploy.yml`), using `next build`'s static export output.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 📄 License
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT — feel free to fork, learn from, or build on top of this.
+
+---
+
+Built by [@avantika029](https://github.com/avantika029) — with Claude as a debugging partner for the trickier parts of shipping on Next.js 16 + React 19.
