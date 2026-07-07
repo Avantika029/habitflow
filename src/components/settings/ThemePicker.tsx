@@ -1,6 +1,6 @@
 'use client'
 
-import { useThemeStore, AppTheme } from '@/lib/store'
+import { useThemeStore, type AppTheme } from '@/lib/store'
 import { Check } from 'lucide-react'
 import { motion } from 'framer-motion'
 

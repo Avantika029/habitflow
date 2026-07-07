@@ -4,7 +4,7 @@ import { useSyncExternalStore } from 'react'
 import { useTheme } from 'next-themes'
 import { Sun, Moon, Monitor, Download, Trash2 } from 'lucide-react'
 import { useHabitStore } from '@/lib/store'
-import { getAllLogs } from '@/lib/db'
+import { getAllLogs, closeDB } from '@/lib/db'
 import ThemePicker from '@/components/settings/ThemePicker'
 
 const ACCENT_COLORS = [
@@ -22,6 +22,20 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
       {children}
     </h2>
   )
+}
+
+// Wraps the raw IndexedDB deleteDatabase() request in a Promise so we can
+// actually await it, instead of firing it and moving on. onblocked fires
+// if some OTHER connection (e.g. a second tab) is still open — we still
+// resolve rather than hang forever, since our own connection is already
+// closed by the time this runs (see handleClearData below).
+function deleteIndexedDB(name: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.deleteDatabase(name)
+    req.onsuccess = () => resolve()
+    req.onerror = () => reject(req.error)
+    req.onblocked = () => resolve()
+  })
 }
 
 export default function SettingsPage() {
@@ -48,16 +62,24 @@ export default function SettingsPage() {
     URL.revokeObjectURL(url)
   }
 
-  function handleClearData() {
-    if (confirm('Delete ALL habits and logs? This cannot be undone.')) {
-      // Clear IndexedDB
-      indexedDB.deleteDatabase('habitflow-db')
-      // Clear all Zustand persisted stores from localStorage
-      localStorage.removeItem('habitflow-gamification')
-      localStorage.removeItem('habitflow-theme')
-      localStorage.removeItem('habitflow-accent')
-      window.location.reload()
-    }
+  async function handleClearData() {
+    if (!confirm('Delete ALL habits and logs? This cannot be undone.')) return
+
+    // Close OUR connection first. Skipping this is what caused the
+    // "InvalidStateError: connection is closing" bug — deleteDatabase()
+    // would sit blocked behind our still-open connection, and the
+    // window.location.reload() that followed tore the connection down
+    // mid-navigation while other in-flight IndexedDB calls were still
+    // running, throwing InvalidStateError on them.
+    await closeDB()
+    await deleteIndexedDB('habitflow-db')
+
+    // Clear all Zustand persisted stores from localStorage
+    localStorage.removeItem('habitflow-gamification')
+    localStorage.removeItem('habitflow-theme')
+    localStorage.removeItem('habitflow-accent')
+
+    window.location.reload()
   }
 
   function setAccentColor(color: string) {
