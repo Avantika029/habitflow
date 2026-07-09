@@ -5,6 +5,7 @@ import { getAllLogs } from '@/lib/db'
 import { useHabitStore, useGamificationStore } from '@/lib/store'
 import { useStreaks } from '@/lib/hooks/useHabits'
 import { HabitLog } from '@/types'
+import { todayISO } from '@/lib/utils/dateUtils'
 
 function getLast7Days(): string[] {
   return Array.from({ length: 7 }, (_, i) => {
@@ -26,12 +27,23 @@ export default function MiniAnalytics() {
 
   const activeHabits = habits.filter((h) => !h.isArchived)
   const last7 = getLast7Days()
+  const today = todayISO()
 
-  // Completion rate overall
-  const totalPossible = logs.length
-  const totalDone = logs.filter((l) => l.completed).length
+  // Today's completion rate — done today ÷ active habits. This used to be
+  // calculated as (all completed logs ever) ÷ (all log entries ever),
+  // which is a lifetime ratio across every log in the database — not
+  // "today, out of my current habits." That's why it could show something
+  // like 50% while only 1 of 4 habits was done today: it was including
+  // old logs (including test data) in the denominator/numerator that have
+  // nothing to do with today's actual progress. This now matches the
+  // per-day math used on the /analytics page's chart.
+  const todayCompletions = logs.filter(
+    (l) => l.date === today && l.completed
+  ).length
   const completionRate =
-    totalPossible === 0 ? 0 : Math.round((totalDone / totalPossible) * 100)
+    activeHabits.length === 0
+      ? 0
+      : Math.round((todayCompletions / activeHabits.length) * 100)
 
   // This week completions
   const weekDone = logs.filter(
